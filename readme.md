@@ -2,6 +2,9 @@
 
 nlog is an easy-to-use, modern, lightweight, and efficient C++20 logging library.
 
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](./LICENSE)
+![Require](https://img.shields.io/badge/%20Require%20-%3E=%20C++%2020-orange.svg)
+
 ## Features
 
 - No Macro

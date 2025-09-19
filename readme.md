@@ -6,6 +6,7 @@ nlog is an easy-to-use, modern, lightweight, and efficient C++20 logging library
 
 - No Macro
 - Header Only (No build/link required)
+- Auto SrcLoc (Automatically capture source code location)
 - Supports multiple appenders (Console, File, Custom)
 - Supports custom formatted log messages
 - Supports asynchronous logging
@@ -200,9 +201,9 @@ When constructing it, you can specify a root path to truncate and whether to use
 explicit DefaultFormatter(const std::string &rootPath = "", bool useFullPath = false)
 ```
 
-When `rootPath` is an empty string (default), `file` = `main.cpp`.
-When `rootPath` is a path, e.g., `/to/path/`, and the file is at `/to/path/src/main.cpp`, `file` = `/src/main.cpp`.
-When `useFullPath` is `true`, `rootPath` is ignored, and the full path is always displayed. `file` = `/to/path/src/main.cpp`.
+When `rootPath` is an empty string (default), `file` = `main.cpp`.  
+When `rootPath` is a path, e.g., `/to/path/`, and the file is at `/to/path/src/main.cpp`, `file` = `/src/main.cpp`.  
+When `useFullPath` is `true`, `rootPath` is ignored, and the full path is always displayed. `file` = `/to/path/src/main.cpp`.  
 
 #### Custom Formatter
 

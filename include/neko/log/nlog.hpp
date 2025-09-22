@@ -8,9 +8,26 @@
 
 #pragma once
 
-#include "neko/schema/exception.hpp"
-#include "neko/schema/srcloc.hpp"
-#include "neko/schema/types.hpp"
+/* ===================== */
+/* == Compiler Checks == */
+/* ===================== */
+
+#if __cplusplus < 202002L
+    #error "Neko logging requires C++20 or later"
+#endif
+
+#if __cpp_lib_format < 201907L
+    #error "Neko logging requires <format> support"
+#endif
+
+
+/* ===================== */
+/* === Include Files === */
+/* ===================== */
+
+#include <neko/schema/exception.hpp>
+#include <neko/schema/srcLoc.hpp>
+#include <neko/schema/types.hpp>
 
 #include <chrono>
 #include <format>

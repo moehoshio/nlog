@@ -1,8 +1,8 @@
-# nlog - Neko Logging Library
+# Neko Logging
 
-nlog is an easy-to-use, modern, lightweight, and efficient C++20 logging library.
+Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 logging library.
 
-[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 ![Require](https://img.shields.io/badge/%20Require%20-%3E=%20C++%2020-orange.svg)
 
 ## Features
@@ -18,18 +18,85 @@ nlog is an easy-to-use, modern, lightweight, and efficient C++20 logging library
 
 ## Quick Start
 
-1. Clone the repository to your host
+Configure:
+[CMake](#cmake) | [Git Submodule](#git-submodule) | [Manual](#manual)
+
+Example:
+[Basic](#basic-example) | [Logging](#logging) | [Level](#level) | [Set Thread Name](#set-thread-name)
+
+Advanced:
+[Appenders](#appenders) | [Formatting Logs](#formatting-logs) | [Asynchronous Logging](#asynchronous-logging) | [RAII Scope Logging](#raii-scope-logging)
+
+### CMake
+
+1. Using CMake's `FetchContent` to include NekoLog in your project:
+
+```cmake
+include(FetchContent)
+
+# Add NekoLog to your CMake project
+FetchContent_Declare(
+    NekoLog
+    GIT_REPOSITORY https://github.com/moehoshio/nlog.git
+    GIT_TAG        main
+)
+FetchContent_MakeAvailable(NekoLog)
+
+target_link_libraries(your_target PRIVATE NekoLog)
+```
+
+2. Include the header in your source code
+
+```cpp
+#include <neko/log/nlog.hpp>
+```
+
+### Git Submodule
+
+1. Add NekoLog as a submodule to your repository
+
+```shell
+git submodule add https://github.com/moehoshio/nlog.git
+```
+
+2. Update submodules:
+
+```shell
+git submodule update --init --recursive
+```
+
+3. Include the header in your source code
+
+```cpp
+#include <neko/log/nlog.hpp>
+```
+
+### Manual
+
+1. Clone or download the repository to your host
 
 ```shell
 git clone https://github.com/moehoshio/nlog.git
 ```
 
+or
+
+```shell
+curl -L -o nlog.zip https://github.com/moehoshio/nlog/archive/refs/heads/main.zip
+
+unzip nlog.zip
+```
+
 2. Copy the `include` folder to your include directory
+
+```shell
+cp -r nlog/include/ /path/to/your/include/
+```
 
 3. Include the header in your source code
 
 ```cpp
-#include "neko/log/nlog.hpp"
+#include <neko/log/nlog.hpp>
 ```
 
 ### Basic Example
@@ -196,7 +263,7 @@ So, it is recommended to have a built-in formatter object when creating a custom
 #### Default Formatter
 
 The default formatter's format is:
-[data time] [level] [thread] [file:line] [msg]
+[date time] [level] [thread] [file:line] [msg]
 
 When constructing it, you can specify a root path to truncate and whether to use the full path. The function is defined as follows:
 

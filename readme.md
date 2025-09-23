@@ -16,16 +16,21 @@ Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 
 - Thread-safe
 - RAII-style scope logging
 
+## Requirements
+
+- C++20 or higher compatible compiler
+- CMake 3.14 or higher (if using CMake)
+
 ## Quick Start
 
 Configure:
-[CMake](#cmake) | [Git Submodule](#git-submodule) | [Manual](#manual)
+[CMake](#cmake) | [Manual](#manual)
 
 Example:
-[Basic](#basic-example) | [Logging](#logging) | [Level](#level) | [Set Thread Name](#set-thread-name)
+[Basic](#basic-example) | [Logging](#logging) | [Level](#level) | [Set Thread Name](#set-thread-name) | [RAII Scope Logging](#raii-scope-logging)
 
 Advanced:
-[Appenders](#appenders) | [Formatting Logs](#formatting-logs) | [Asynchronous Logging](#asynchronous-logging) | [RAII Scope Logging](#raii-scope-logging)
+[Appenders](#appenders) | [Formatting Logs](#formatting-logs) | [Asynchronous Logging](#asynchronous-logging)
 
 ### CMake
 
@@ -51,27 +56,11 @@ target_link_libraries(your_target PRIVATE NekoLog)
 #include <neko/log/nlog.hpp>
 ```
 
-### Git Submodule
-
-1. Add NekoLog as a submodule to your repository
-
-```shell
-git submodule add https://github.com/moehoshio/nlog.git
-```
-
-2. Update submodules:
-
-```shell
-git submodule update --init --recursive
-```
-
-3. Include the header in your source code
-
-```cpp
-#include <neko/log/nlog.hpp>
-```
-
 ### Manual
+
+When installing manually, you need to manually fetch the dependency [`NekoSchema`](https://github.com/moehoshio/NekoSchema).
+
+After installing the dependency, please continue:
 
 1. Clone or download the repository to your host
 

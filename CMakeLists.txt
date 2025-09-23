@@ -14,8 +14,6 @@ if(NEKO_AUTO_FETCH_DEPS)
     )
     FetchContent_MakeAvailable(NekoSchema)
 
-target_link_libraries(NekoLog PRIVATE NekoSchema)
-
 endif(NEKO_AUTO_FETCH_DEPS)
 
 

@@ -288,15 +288,25 @@ namespace neko::log {
     class ConsoleAppender : public IAppender {
     private:
         std::unique_ptr<IFormatter> formatter;
-        std::mutex mutex;
+        mutable std::mutex mutex;
 
     public:
         explicit ConsoleAppender(std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
-            : formatter(std::move(formatter)) {}
+            : formatter(std::move(formatter)) {
+                preOutput();
+            }
 
         explicit ConsoleAppender(Level level, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
             : formatter(std::move(formatter)) {
             setLevel(level);
+            preOutput();
+        }
+
+        void preOutput() {
+            std::lock_guard<std::mutex> lock(mutex);
+            std::cout << "=== ConsoleAppender initialized ===" << std::endl;
+            std::cout << "=== Level: " << levelToString(getLevel()) << " ===" << std::endl;
+            std::cout << "=== Log Start ===" << std::endl;
         }
 
         void append(const LogRecord &record) override {
@@ -347,7 +357,7 @@ namespace neko::log {
     private:
         std::unique_ptr<IFormatter> formatter;
         std::ofstream file;
-        std::mutex mutex;
+        mutable std::mutex mutex;
 
     public:
         explicit FileAppender(const std::string &filename, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
@@ -355,6 +365,7 @@ namespace neko::log {
             if (!file.is_open()) {
                 throw neko::ex::FileError("Failed to open log file: " + filename);
             }
+            preOutput(filename, isTruncate);
         }
 
         explicit FileAppender(const std::string &filename, Level level, bool isTruncate = false, std::unique_ptr<IFormatter> formatter = std::make_unique<DefaultFormatter>())
@@ -363,6 +374,16 @@ namespace neko::log {
                 throw neko::ex::FileError("Failed to open log file: " + filename);
             }
             setLevel(level);
+            preOutput(filename, isTruncate);
+        }
+
+        void preOutput(const std::string &filename, bool isTruncate) {
+            std::lock_guard<std::mutex> lock(mutex);
+            if (file.is_open()) {
+                file << "=== FileAppender initialized ===" << std::endl;
+                file << "=== FileName: " << filename << ", Level: " << levelToString(getLevel()) << ", Mode: " << (isTruncate ? "Truncate" : "Append") << " ===" << std::endl;
+                file << "=== Log Start ===" << std::endl;
+            }
         }
 
         void append(const LogRecord &record) override {

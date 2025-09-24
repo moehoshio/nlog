@@ -24,13 +24,13 @@ Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 
 ## Quick Start
 
 Configure:
-[CMake](#cmake) | [Manual](#manual)
+[CMake](#cmake) | [Manual](#manual) | [Test](#test)
 
 Example:
 [Basic](#basic-example) | [Logging](#logging) | [Level](#level) | [Set Thread Name](#set-thread-name) | [RAII Scope Logging](#raii-scope-logging)
 
 Advanced:
-[Appenders](#appenders) | [Formatting Logs](#formatting-logs) | [Asynchronous Logging](#asynchronous-logging)
+[Appenders](#appenders) | [Formatting Logs](#formatting-logs) | [Asynchronous Logging](#asynchronous-logging) | [Disable Tests](#disable-tests)
 
 ### CMake
 
@@ -343,6 +343,40 @@ void someFunction() {
 }
 ```
 
+## Test
+
+You can run the tests to verify that everything is working correctly.
+
+If you haven't configured the build yet, please run:
+
+```shell
+cmake -B ./build .
+```
+
+Then, you can run the tests with the following commands:
+
+Unix Makefile / Ninja generator：
+
+```shell
+cmake --build ./build --target test
+```
+
+Visual Studio generator：
+
+```shell
+cmake --build ./build --config Debug --target RUN_TESTS
+```
+
+### Disable Tests
+
+If you want to disable building and running tests, you can set the following CMake option when configuring your project:
+
+```shell
+cmake -B ./build . -DNEKOLOG_ENABLE_TESTS=OFF
+```
+
+This will skip test targets during the build process.
+
 ## License
 
-[License](./LICENSE) MIT OR Apache-2.0
+[License](LICENSE) MIT OR Apache-2.0

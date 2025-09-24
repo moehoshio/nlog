@@ -3,6 +3,8 @@ project(NekoLog VERSION 1.0 LANGUAGES CXX)
 
 option(NEKO_AUTO_FETCH_DEPS "Automatically fetch dependencies" ON)
 
+option(NEKO_BUILD_TESTS "Build tests" ON)
+
 if(NEKO_AUTO_FETCH_DEPS)
 
     include(FetchContent)
@@ -28,3 +30,23 @@ target_include_directories(NekoLog INTERFACE
 target_link_libraries(NekoLog INTERFACE NekoSchema)
 
 target_compile_features(NekoLog INTERFACE cxx_std_20)
+
+if(MSVC)
+    target_compile_options(NekoLog INTERFACE /Zc:__cplusplus)
+endif()
+
+# Tests
+if(NEKO_BUILD_TESTS)
+    enable_testing()
+
+    add_executable(nlog_test_app tests/nlog_test.cpp)
+    target_include_directories(nlog_test_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(nlog_test_app PRIVATE NekoLog)
+    target_compile_features(nlog_test_app PRIVATE cxx_std_20)
+
+    if(MSVC)
+        target_compile_options(nlog_test_app PRIVATE /Zc:__cplusplus)
+    endif()
+    
+    add_test(NAME nlog_test_app COMMAND nlog_test_app)
+endif()

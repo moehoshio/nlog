@@ -24,7 +24,7 @@ Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 
 ## Quick Start
 
 Configure:
-[CMake](#cmake) | [Manual](#manual) | [Test](#test)
+[CMake](#cmake) | [Manual](#manual) | [Tests](#tests)
 
 Example:
 [Basic](#basic-example) | [Logging](#logging) | [Level](#level) | [Set Thread Name](#set-thread-name) | [RAII Scope Logging](#raii-scope-logging)
@@ -343,7 +343,7 @@ void someFunction() {
 }
 ```
 
-## Test
+## Tests
 
 You can run the tests to verify that everything is working correctly.
 
@@ -372,7 +372,7 @@ cmake --build ./build --config Debug --target RUN_TESTS
 If you want to disable building and running tests, you can set the following CMake option when configuring your project:
 
 ```shell
-cmake -B ./build . -DNEKOLOG_ENABLE_TESTS=OFF
+cmake -B ./build . -DNEKO_BUILD_TESTS=OFF
 ```
 
 This will skip test targets during the build process.

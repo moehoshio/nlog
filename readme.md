@@ -353,6 +353,12 @@ If you haven't configured the build yet, please run:
 cmake -B ./build .
 ```
 
+Now, you can build the test files (you must build them manually at least once before running the tests!).
+
+```shell
+cmake --build ./build -DNEKO_BUILD_TESTS=ON
+```
+
 Then, you can run the tests with the following commands:
 
 Unix Makefile / Ninja generator：
@@ -365,6 +371,18 @@ Visual Studio generator：
 
 ```shell
 cmake --build ./build --config Debug --target RUN_TESTS
+```
+
+If everything is set up correctly, you should see output similar to the following:
+
+```shell
+  Test project /path/to/nlog/build
+      Start 1: nlog_tests
+  1/1 Test #1: nlog_tests ........................   Passed    0.21 sec
+
+  100% tests passed, 0 tests failed out of 1
+
+  Total Test time (real) =   0.21 sec
 ```
 
 ### Disable Tests

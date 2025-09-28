@@ -350,13 +350,13 @@ You can run the tests to verify that everything is working correctly.
 If you haven't configured the build yet, please run:
 
 ```shell
-cmake -B ./build .
+cmake -B ./build . -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON
 ```
 
 Now, you can build the test files (you must build them manually at least once before running the tests!).
 
 ```shell
-cmake --build ./build -DNEKO_BUILD_TESTS=ON
+cmake --build ./build --config Debug
 ```
 
 Then, you can run the tests with the following commands:

@@ -20,6 +20,7 @@ endif(NEKO_AUTO_FETCH_DEPS)
 
 
 add_library(NekoLog INTERFACE)
+add_library(Neko::Log ALIAS NekoLog)
 
 target_include_directories(NekoLog INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

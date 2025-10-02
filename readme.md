@@ -4,6 +4,7 @@ Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 
 
 [![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 ![Require](https://img.shields.io/badge/%20Require%20-%3E=%20C++%2020-orange.svg)
+[![CMake](https://img.shields.io/badge/CMake-3.14+-green.svg)](https://cmake.org/)
 
 ## Features
 
@@ -47,7 +48,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(NekoLog)
 
-target_link_libraries(your_target PRIVATE NekoLog)
+# Add your target and link NekoLog
+add_executable(your_target main.cpp)
+
+target_link_libraries(your_target PRIVATE Neko::Log)
 ```
 
 2. Include the header in your source code

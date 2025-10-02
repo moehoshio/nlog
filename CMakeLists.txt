@@ -59,8 +59,6 @@ if(NEKO_BUILD_TESTS)
     target_link_libraries(nlog_test_app PRIVATE NekoLog gtest_main)
     target_compile_features(nlog_test_app PRIVATE cxx_std_20)
 
-    add_test(NAME nlog_test_app COMMAND nlog_test_app)
-
     include(GoogleTest)
     gtest_discover_tests(nlog_test_app)
 endif()

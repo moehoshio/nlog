@@ -98,43 +98,53 @@ TEST(NLogTest, FileLogging) {
 
 // Thread name test
 TEST(NLogTest, ThreadName) {
-    // Test thread name functionality
+    // Clear appenders before starting the test
+    log::clearAppenders();
+    
+    // Test thread name functionality by using separate test runs
     std::vector<std::string> thread1Messages;
     std::vector<std::string> thread2Messages;
     std::mutex messagesMutex;
     
-    std::thread t1([&thread1Messages, &messagesMutex] {
-        // Create a test appender for this thread
+    // Test thread 1
+    {
         auto testAppender = std::make_unique<TestAppender>();
         TestAppender* appenderPtr = testAppender.get();
         
         log::clearAppenders();
         log::addAppender(std::move(testAppender));
-        log::setCurrentThreadName("Thread 1");
-        log::info("Thread-1 log message");
-        log::flushLog();
         
-        std::lock_guard<std::mutex> lock(messagesMutex);
-        thread1Messages = appenderPtr->getMessages();
-    });
-
-    std::thread t2([&thread2Messages, &messagesMutex] {
-        // Create a test appender for this thread  
+        std::thread t1([&thread1Messages, appenderPtr, &messagesMutex] {
+            log::setCurrentThreadName("Thread 1");
+            log::info("Thread-1 log message");
+            log::flushLog();
+            
+            std::lock_guard<std::mutex> lock(messagesMutex);
+            thread1Messages = appenderPtr->getMessages();
+        });
+        
+        t1.join();
+    }
+    
+    // Test thread 2
+    {
         auto testAppender = std::make_unique<TestAppender>();
         TestAppender* appenderPtr = testAppender.get();
         
         log::clearAppenders();
         log::addAppender(std::move(testAppender));
-        log::setCurrentThreadName("Thread 2");
-        log::info("Thread-2 log message");
-        log::flushLog();
         
-        std::lock_guard<std::mutex> lock(messagesMutex);
-        thread2Messages = appenderPtr->getMessages();
-    });
-
-    t1.join();
-    t2.join();
+        std::thread t2([&thread2Messages, appenderPtr, &messagesMutex] {
+            log::setCurrentThreadName("Thread 2");
+            log::info("Thread-2 log message");
+            log::flushLog();
+            
+            std::lock_guard<std::mutex> lock(messagesMutex);
+            thread2Messages = appenderPtr->getMessages();
+        });
+        
+        t2.join();
+    }
 
     // Verify thread names appear in log messages
     ASSERT_FALSE(thread1Messages.empty()) << "Thread 1 should have logged messages";
@@ -162,6 +172,9 @@ TEST(NLogTest, ThreadName) {
                                  << (thread1Messages.empty() ? "None" : thread1Messages[0]);
     EXPECT_TRUE(foundThread2Name) << "Thread 2 name not found in log messages. Messages: " 
                                  << (thread2Messages.empty() ? "None" : thread2Messages[0]);
+                                 
+    // Clean up
+    log::clearAppenders();
 }
 
 // Log level filtering test

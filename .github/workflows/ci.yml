@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          # Windows builds
+          - {
+              name: "Windows MSVC 2022 Debug",
+              os: windows-latest,
+              cc: "cl",
+              cxx: "cl",
+              build_type: "Debug",
+              generators: "Visual Studio 17 2022"
+            }
+          
+          # Linux builds
+          - {
+              name: "Ubuntu GCC Debug",
+              os: ubuntu-latest,
+              cc: "gcc",
+              cxx: "g++",
+              build_type: "Debug",
+              generators: "Unix Makefiles"
+            }
+          
+          # macOS builds
+          - {
+              name: "macOS Clang Debug",
+              os: macos-latest,
+              cc: "clang",
+              cxx: "clang++",
+              build_type: "Debug",
+              generators: "Unix Makefiles"
+            }
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies (Ubuntu)
+      if: startsWith(matrix.config.os, 'ubuntu')
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake ninja-build
+        if [ "${{ matrix.config.cxx }}" = "clang++" ]; then
+          sudo apt-get install -y clang
+        fi
+
+    - name: Check compiler versions (Debug)
+      if: startsWith(matrix.config.os, 'ubuntu')
+      run: |
+        echo "=== Compiler Information ==="
+        ${{ matrix.config.cxx }} --version
+        echo "=== CMake Information ==="
+        cmake --version
+        echo "=== Standard Library Check ==="
+        echo '#include <version>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "C++20 headers available" || echo "C++20 headers missing"
+        echo '#include <source_location>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "source_location available" || echo "source_location missing"
+
+    - name: Install dependencies (macOS)
+      if: startsWith(matrix.config.os, 'macos')
+      run: |
+        brew install cmake ninja
+
+    - name: Install dependencies (Windows)
+      if: startsWith(matrix.config.os, 'windows')
+      run: |
+        if ("${{ matrix.config.generators }}" -eq "Ninja") {
+          choco install ninja
+          # Setup Clang
+          choco install llvm
+        }
+
+    - name: Set up MSVC environment (Windows)
+      if: startsWith(matrix.config.os, 'windows') && matrix.config.cc == 'cl'
+      uses: ilammy/msvc-dev-cmd@v1.13.0
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON
+
+    - name: Build
+      run: cmake --build build --config ${{ matrix.config.build_type }} --parallel
+
+    - name: Run tests
+      working-directory: build
+      run: |
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          if [ "${{ matrix.config.generators }}" = "Visual Studio 17 2022" ]; then
+            ctest -C ${{ matrix.config.build_type }} --output-on-failure --verbose
+          else
+            ctest --output-on-failure --verbose
+          fi
+        else
+          ctest --output-on-failure --verbose
+        fi
+      shell: bash
+
+    - name: Upload build artifacts (on failure)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-${{ matrix.config.name }}
+        path: |
+          build/CMakeFiles/CMakeOutput.log
+          build/CMakeFiles/CMakeError.log
+          build/Testing/Temporary/LastTest.log

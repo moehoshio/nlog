@@ -377,12 +377,18 @@ If everything is set up correctly, you should see output similar to the followin
 
 ```shell
   Test project /path/to/nlog/build
-      Start 1: nlog_tests
-  1/1 Test #1: nlog_tests ........................   Passed    0.21 sec
+        Start  1: NLogTest.FileLogging
+   1/36 Test  #1: NLogTest.FileLogging ................
+  .................   Passed    0.02 sec
 
-  100% tests passed, 0 tests failed out of 1
+    # ......
 
-  Total Test time (real) =   0.21 sec
+        Start 36: PerformanceTest.ConstexprMapLookupSpeed
+  36/36 Test #36: PerformanceTest.ConstexprMapLookupSpeed ..............   Passed    0.02 sec
+
+  100% tests passed, 0 tests failed out of 36
+
+  Total Test time (real) =   0.78 sec
 ```
 
 ### Disable Tests

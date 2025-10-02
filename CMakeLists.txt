@@ -16,6 +16,18 @@ if(NEKO_AUTO_FETCH_DEPS)
     )
     FetchContent_MakeAvailable(NekoSchema)
 
+    # Google Test for unit testing
+    if(NEKO_BUILD_TESTS)
+        FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG        release-1.16.0
+        )
+        # For Windows: Prevent overriding the parent project's compiler/linker settings
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable(googletest)
+    endif()
+
 endif(NEKO_AUTO_FETCH_DEPS)
 
 
@@ -42,7 +54,7 @@ if(NEKO_BUILD_TESTS)
 
     add_executable(nlog_test_app tests/nlog_test.cpp)
     target_include_directories(nlog_test_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(nlog_test_app PRIVATE NekoLog)
+    target_link_libraries(nlog_test_app PRIVATE NekoLog gtest_main)
     target_compile_features(nlog_test_app PRIVATE cxx_std_20)
 
     if(MSVC)

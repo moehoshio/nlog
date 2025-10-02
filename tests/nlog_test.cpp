@@ -1,224 +1,336 @@
+#include <gtest/gtest.h>
+#include <neko/log/nlog.hpp>
+
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <ostream>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
 
-#include <neko/log/nlog.hpp>
-
 using namespace neko;
 
-class TestFormatter : public log::IFormatter {
+// Test utilities
+class TestAppender : public log::IAppender {
 private:
-    static neko::uint64 i;
-
-public:
-    std::string format(const log::LogRecord &record) override {
-        return "[TestFormatter] [Test-" + std::to_string(++i) + "] " + record.message;
-    }
-};
-
-neko::uint64 TestFormatter::i = 0;
-
-class CustomAppender : public log::IAppender {
-private:
-    std::vector<std::string> buffer;
-
-    std::function<void(const std::string &)> outputFunc;
+    std::vector<std::string> messages;
     std::unique_ptr<log::IFormatter> formatter;
 
 public:
-    explicit CustomAppender(std::function<void(const std::string &)> outputFunc)
-        : outputFunc(outputFunc), formatter(std::make_unique<log::DefaultFormatter>()) {}
-
-    bool find(const std::string &msg) const {
-        return std::find(buffer.begin(), buffer.end(), msg) != buffer.end();
-    }
+    explicit TestAppender(std::unique_ptr<log::IFormatter> fmt = std::make_unique<log::DefaultFormatter>())
+        : formatter(std::move(fmt)) {}
 
     void append(const log::LogRecord &record) override {
         std::string formatted = formatter->format(record);
-        outputFunc(formatted);
-        buffer.push_back(formatted);
+        messages.push_back(formatted);
     }
 
     void flush() override {
-        for (const auto &msg : buffer) {
-            std::cerr << msg << std::endl;
-        }
-        buffer.clear();
+        // Nothing to flush for test appender
+    }
+
+    const std::vector<std::string>& getMessages() const {
+        return messages;
     }
 
     void clear() {
-        buffer.clear();
+        messages.clear();
     }
 
-    ~CustomAppender() {
-        flush();
+    bool containsMessage(const std::string &substr) const {
+        return std::any_of(messages.begin(), messages.end(),
+            [&substr](const std::string &msg) {
+                return msg.find(substr) != std::string::npos;
+            });
     }
 };
 
-void writeFile_test() {
-    log::ConsoleAppender instance(std::make_unique<TestFormatter>());
-
-    instance.append(log::LogRecord(log::Level::Info, "Starting writeFile_test"));
-
+// File logging test
+TEST(NLogTest, FileLogging) {
+    // Clean up any existing appenders
     log::clearAppenders();
-    log::addFileAppender("test_log.txt", true, std::make_unique<log::DefaultFormatter>());
+    
+    // Add file appender
+    const std::string testFile = "test_log.txt";
+    log::addFileAppender(testFile, true, std::make_unique<log::DefaultFormatter>());
 
+    // Log messages at different levels
     log::info("This is a test log message to file.");
     log::warn("This is a warning log message to file.");
     log::error("This is an error log message to file.");
 
+    // Ensure logs are written
     log::flushLog();
-
     log::clearAppenders();
-    std::ifstream file("test_log.txt", std::ios::in);
-    if (!file.is_open()) {
-        instance.append(log::LogRecord(log::Level::Error, "Failed to open log file for reading."));
-        throw std::runtime_error("Log message content incorrect.");
-    }
-    // Read the file and check for [Info], [Warn], [Error] keywords
+
+    // Read and verify file contents
+    std::ifstream file(testFile);
+    ASSERT_TRUE(file.is_open()) << "Failed to open log file for reading";
+
     std::string line;
     bool foundInfo = false, foundWarn = false, foundError = false;
+    
     while (std::getline(file, line)) {
         if (line.find("[Info]") != std::string::npos) {
             foundInfo = true;
-            instance.append(log::LogRecord(log::Level::Warn, "Found Info log entry."));
         }
         if (line.find("[Warn]") != std::string::npos) {
             foundWarn = true;
-            instance.append(log::LogRecord(log::Level::Warn, "Found Warn log entry."));
         }
         if (line.find("[Error]") != std::string::npos) {
             foundError = true;
-            instance.append(log::LogRecord(log::Level::Warn, "Found Error log entry."));
         }
-    }
-    if (foundInfo && foundWarn && foundError) {
-        instance.append(log::LogRecord(log::Level::Warn, "writeFile_test passed: All log levels found."));
-    } else {
-        instance.append(log::LogRecord(log::Level::Error, "writeFile_test failed: Missing log levels."));
-        throw std::runtime_error("Log message content incorrect.");
     }
     file.close();
 
-    instance.append(log::LogRecord(log::Level::Info, "writeFile_test completed."));
+    // Clean up test file
+    std::filesystem::remove(testFile);
+
+    // Verify all log levels were found
+    EXPECT_TRUE(foundInfo) << "Info log entry not found in file";
+    EXPECT_TRUE(foundWarn) << "Warn log entry not found in file";
+    EXPECT_TRUE(foundError) << "Error log entry not found in file";
 }
 
-void threadName_test() {
-    log::ConsoleAppender instance(std::make_unique<TestFormatter>());
-
-    instance.append(log::LogRecord(log::Level::Info, "Starting threadName_test"));
-
-    std::string targetThreadName;
-
-    auto checkThreadName = [&instance, &targetThreadName](const std::string &msg) {        
-        if (msg.find(targetThreadName) == std::string::npos) {
-            instance.append(log::LogRecord(log::Level::Error, "Thread name " + targetThreadName + " not found in log message."));
-            throw std::runtime_error("Log message content incorrect.");
-        } else {
-            instance.append(log::LogRecord(log::Level::Warn, "Thread name " + targetThreadName + " found in log message."));
-        }
-    };
-    std::thread t1([&] {
+// Thread name test
+TEST(NLogTest, ThreadName) {
+    // Test thread name functionality
+    std::vector<std::string> thread1Messages;
+    std::vector<std::string> thread2Messages;
+    std::mutex messagesMutex;
+    
+    std::thread t1([&thread1Messages, &messagesMutex] {
+        // Create a test appender for this thread
+        auto testAppender = std::make_unique<TestAppender>();
+        TestAppender* appenderPtr = testAppender.get();
+        
         log::clearAppenders();
-        targetThreadName = "[Thread 1]";
-        log::addAppender(std::make_unique<CustomAppender>(checkThreadName));
+        log::addAppender(std::move(testAppender));
         log::setCurrentThreadName("Thread 1");
         log::info("Thread-1 log message");
+        log::flushLog();
+        
+        std::lock_guard<std::mutex> lock(messagesMutex);
+        thread1Messages = appenderPtr->getMessages();
+    });
+
+    std::thread t2([&thread2Messages, &messagesMutex] {
+        // Create a test appender for this thread  
+        auto testAppender = std::make_unique<TestAppender>();
+        TestAppender* appenderPtr = testAppender.get();
+        
+        log::clearAppenders();
+        log::addAppender(std::move(testAppender));
+        log::setCurrentThreadName("Thread 2");
+        log::info("Thread-2 log message");
+        log::flushLog();
+        
+        std::lock_guard<std::mutex> lock(messagesMutex);
+        thread2Messages = appenderPtr->getMessages();
     });
 
     t1.join();
-    std::thread t2([&] {
-        log::clearAppenders();
-        targetThreadName = "[Thread 2]";
-        log::addAppender(std::make_unique<CustomAppender>(checkThreadName));
-        log::setCurrentThreadName("Thread 2");
-        log::info("Thread-2 log message");
-    });
     t2.join();
 
-    instance.append(log::LogRecord(log::Level::Info, "threadName_test completed."));
+    // Verify thread names appear in log messages
+    ASSERT_FALSE(thread1Messages.empty()) << "Thread 1 should have logged messages";
+    ASSERT_FALSE(thread2Messages.empty()) << "Thread 2 should have logged messages";
+    
+    // Check if any of the thread 1 messages contain the thread name
+    bool foundThread1Name = false;
+    for (const auto& msg : thread1Messages) {
+        if (msg.find("[Thread 1]") != std::string::npos) {
+            foundThread1Name = true;
+            break;
+        }
+    }
+    
+    // Check if any of the thread 2 messages contain the thread name
+    bool foundThread2Name = false;
+    for (const auto& msg : thread2Messages) {
+        if (msg.find("[Thread 2]") != std::string::npos) {
+            foundThread2Name = true;
+            break;
+        }
+    }
+    
+    EXPECT_TRUE(foundThread1Name) << "Thread 1 name not found in log messages. Messages: " 
+                                 << (thread1Messages.empty() ? "None" : thread1Messages[0]);
+    EXPECT_TRUE(foundThread2Name) << "Thread 2 name not found in log messages. Messages: " 
+                                 << (thread2Messages.empty() ? "None" : thread2Messages[0]);
 }
 
-void logLevel_test(){
-    log::ConsoleAppender instance(std::make_unique<TestFormatter>());
-
-    instance.append(log::LogRecord(log::Level::Info, "Starting logLevel_test"));
-
+// Log level filtering test
+TEST(NLogTest, LogLevelFiltering) {
     log::clearAppenders();
+    
+    auto testAppender = std::make_unique<TestAppender>();
+    auto* appenderPtr = testAppender.get();
+    
+    log::addAppender(std::move(testAppender));
 
-    bool isOK = true;
-    auto customAppender = std::make_unique<CustomAppender>([&instance, &isOK](const std::string &msg) {
-        isOK = false;
-        instance.append(log::LogRecord(log::Level::Error, "Logging is Off but still outputting."));
-    });
-    customAppender->setLevel(log::Level::Warn);
-    log::addAppender(std::move(customAppender));
-
+    // Test with Off level - no messages should be logged
     log::setLevel(log::Level::Off);
-
+    
     log::debug("This is a debug message.");
     log::info("This is an info message.");
     log::warn("This is a warning message.");
     log::error("This is an error message.");
-
+    
     log::flushLog();
+    
+    EXPECT_TRUE(appenderPtr->getMessages().empty()) 
+        << "No messages should be logged when level is Off";
 
-    if (isOK) {
-        instance.append(log::LogRecord(log::Level::Warn, "logLevel_test passed: No logs were output when level is Off."));
-    } else {
-        instance.append(log::LogRecord(log::Level::Error, "logLevel_test failed: Some logs were output when level is Off."));
-        throw std::runtime_error("Log message content incorrect.");
-    }
-
+    // Reset for next test
+    appenderPtr->clear();
+    log::setLevel(log::Level::Warn);
+    
+    log::debug("This debug should not appear");
+    log::info("This info should not appear");
+    log::warn("This warning should appear");
+    log::error("This error should appear");
+    
+    log::flushLog();
+    
+    const auto& messages = appenderPtr->getMessages();
+    EXPECT_EQ(messages.size(), 2) << "Only warn and error messages should be logged";
+    EXPECT_TRUE(appenderPtr->containsMessage("warning should appear"));
+    EXPECT_TRUE(appenderPtr->containsMessage("error should appear"));
+    
+    // Clean up
     log::setLevel(log::Level::Debug);
-
     log::clearAppenders();
-
-    instance.append(log::LogRecord(log::Level::Info, "logLevel_test completed."));
-
 }
 
-void logging_test() {
-    log::ConsoleAppender instance(std::make_unique<TestFormatter>());
+// Basic logging functionality test
+TEST(NLogTest, BasicLogging) {
+    log::clearAppenders();
+    
+    auto testAppender = std::make_unique<TestAppender>();
+    auto* appenderPtr = testAppender.get();
+    
+    log::addAppender(std::move(testAppender));
+    log::setLevel(log::Level::Debug);
 
-    instance.append(log::LogRecord(log::Level::Info, "Starting logging_test"));
-
-    auto checkLogMsg = [&instance](const std::string &msg) {
-        if (msg.find("log message") == std::string::npos) {
-            instance.append(log::LogRecord(log::Level::Error, "Log message content incorrect."));
-            throw std::runtime_error("Log message content incorrect.");
-        } else {
-            instance.append(log::LogRecord(log::Level::Warn, "Log message content correct."));
-        }
-    };
+    // Test all log levels
+    log::debug("This is a debug log message.");
     log::info("This is an info log message.");
     log::warn("This is a warning log message.");
     log::error("This is an error log message.");
-    log::debug("This is a debug log message.");
-
-    instance.append(log::LogRecord(log::Level::Info, "logging_test completed."));
+    
+    log::flushLog();
+    
+    const auto& messages = appenderPtr->getMessages();
+    
+    // Verify all messages were logged
+    EXPECT_EQ(messages.size(), 4) << "All four log messages should be captured";
+    
+    // Verify content
+    EXPECT_TRUE(appenderPtr->containsMessage("debug log message"));
+    EXPECT_TRUE(appenderPtr->containsMessage("info log message"));
+    EXPECT_TRUE(appenderPtr->containsMessage("warning log message"));
+    EXPECT_TRUE(appenderPtr->containsMessage("error log message"));
+    
+    // Verify log levels appear in formatted output
+    EXPECT_TRUE(appenderPtr->containsMessage("[Debug]"));
+    EXPECT_TRUE(appenderPtr->containsMessage("[Info]"));
+    EXPECT_TRUE(appenderPtr->containsMessage("[Warn]"));
+    EXPECT_TRUE(appenderPtr->containsMessage("[Error]"));
+    
+    log::clearAppenders();
 }
 
-int main() {
+// Custom formatter test
+TEST(NLogTest, CustomFormatter) {
+    class TestFormatter : public log::IFormatter {
+    public:
+        std::string format(const log::LogRecord &record) override {
+            return "[CUSTOM] " + std::string(log::levelToString(record.level)) + ": " + record.message;
+        }
+    };
+
     log::clearAppenders();
-    log::setLevel(log::Level::Debug);
-
-    log::ConsoleAppender instance(std::make_unique<TestFormatter>());
     
-    instance.append(log::LogRecord(log::Level::Info, "Starting all tests"));
-
-    logging_test();
-    threadName_test();
-    logLevel_test();
-    writeFile_test();
-
-    instance.append(log::LogRecord(log::Level::Info, "All tests completed."));
+    auto testAppender = std::make_unique<TestAppender>(std::make_unique<TestFormatter>());
+    auto* appenderPtr = testAppender.get();
     
-    return 0;
+    log::addAppender(std::move(testAppender));
+    
+    log::info("Test message with custom formatter");
+    log::flushLog();
+    
+    const auto& messages = appenderPtr->getMessages();
+    ASSERT_FALSE(messages.empty()) << "Should have logged a message";
+    
+    EXPECT_TRUE(appenderPtr->containsMessage("[CUSTOM]"));
+    EXPECT_TRUE(appenderPtr->containsMessage("Info:"));
+    EXPECT_TRUE(appenderPtr->containsMessage("Test message with custom formatter"));
+    
+    log::clearAppenders();
+}
+
+// Console appender test
+TEST(NLogTest, ConsoleAppender) {
+    log::clearAppenders();
+    
+    // This test just ensures console appender can be created and used without throwing
+    log::addAppender(std::make_unique<log::ConsoleAppender>());
+    
+    EXPECT_NO_THROW({
+        log::info("Console test message");
+        log::flushLog();
+    });
+    
+    log::clearAppenders();
+}
+
+// Test fixture for cleanup
+class NLogTestFixture : public ::testing::Test {
+protected:
+    void SetUp() override {
+        log::clearAppenders();
+        log::setLevel(log::Level::Debug);
+    }
+    
+    void TearDown() override {
+        log::clearAppenders();
+        log::setLevel(log::Level::Debug);
+        
+        // Clean up any test files
+        if (std::filesystem::exists("test_log.txt")) {
+            std::filesystem::remove("test_log.txt");
+        }
+    }
+};
+
+// Test using fixture
+TEST_F(NLogTestFixture, AppenderManagement) {
+    // Test adding and clearing appenders
+    auto testAppender1 = std::make_unique<TestAppender>();
+    auto testAppender2 = std::make_unique<TestAppender>();
+    
+    log::addAppender(std::move(testAppender1));
+    log::addAppender(std::move(testAppender2));
+    
+    log::info("Test message");
+    log::flushLog();
+    
+    // Clear appenders should not throw
+    EXPECT_NO_THROW(log::clearAppenders());
+    
+    // After clearing, logging should not throw but may not produce output
+    EXPECT_NO_THROW({
+        log::info("After clear message");
+        log::flushLog();
+    });
+}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

@@ -16,9 +16,16 @@
     #error "Neko logging requires C++20 or later"
 #endif
 
-#if __cpp_lib_format < 201907L
+#if !__has_include(<format>)
+    #error "Neko logging Cannot find header <format>"
+#endif
+
+#include <format>
+
+#if !defined(__cpp_lib_format) || __cpp_lib_format < 201907L
     #error "Neko logging requires <format> support"
 #endif
+
 
 
 /* ===================== */
@@ -30,7 +37,6 @@
 #include <neko/schema/types.hpp>
 
 #include <chrono>
-#include <format>
 #include <memory>
 
 #include <atomic>

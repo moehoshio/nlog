@@ -24,7 +24,7 @@ Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 
 ## Quick Start
 
 Configure:
-[CMake](#cmake) | [Manual](#manual) | [Tests](#tests)
+[CMake](#cmake) | [Manual](#manual) | [Tests](#testing)
 
 Example:
 [Basic](#basic-example) | [Logging](#logging) | [Level](#level) | [Set Thread Name](#set-thread-name) | [RAII Scope Logging](#raii-scope-logging)

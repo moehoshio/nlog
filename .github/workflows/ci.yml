@@ -23,6 +23,14 @@ jobs:
               build_type: "Debug",
               generators: "Visual Studio 17 2022"
             }
+          - {
+              name: "Windows MSVC 2022 Release",
+              os: windows-latest,
+              cc: "cl",
+              cxx: "cl",
+              build_type: "Release",
+              generators: "Visual Studio 17 2022"
+            }
           
           # Linux builds
           - {
@@ -33,7 +41,15 @@ jobs:
               build_type: "Debug",
               generators: "Unix Makefiles"
             }
-          
+          - {
+              name: "Ubuntu GCC Release",
+              os: ubuntu-latest,
+              cc: "gcc",
+              cxx: "g++",
+              build_type: "Release",
+              generators: "Unix Makefiles"
+            }
+
           # macOS builds
           - {
               name: "macOS Clang Debug",
@@ -41,6 +57,14 @@ jobs:
               cc: "clang",
               cxx: "clang++",
               build_type: "Debug",
+              generators: "Unix Makefiles"
+            }
+          - {
+              name: "macOS Clang Release",
+              os: macos-latest,
+              cc: "clang",
+              cxx: "clang++",
+              build_type: "Release",
               generators: "Unix Makefiles"
             }
 
@@ -59,9 +83,20 @@ jobs:
       if: startsWith(matrix.config.os, 'ubuntu')
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake ninja-build
-        if [ "${{ matrix.config.cxx }}" = "clang++" ]; then
-          sudo apt-get install -y clang
+        sudo apt-get install -y build-essential cmake ninja-build software-properties-common
+        
+        # Install GCC-13 from toolchain PPA
+        if [[ "${{ matrix.config.cxx }}" == g++-13 ]]; then
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install -y gcc-13 g++-13
+        # Install Clang-16 from LLVM APT repository
+        elif [[ "${{ matrix.config.cxx }}" == clang++-16 ]]; then
+          wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
+          sudo apt-get install -y clang-16 clang++-16
+        # Install other Clang versions
+        elif [[ "${{ matrix.config.cxx }}" == clang* ]]; then
+          sudo apt-get install -y ${{ matrix.config.cxx }}
         fi
 
     - name: Check compiler versions (Debug)
@@ -74,6 +109,7 @@ jobs:
         echo "=== Standard Library Check ==="
         echo '#include <version>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "C++20 headers available" || echo "C++20 headers missing"
         echo '#include <source_location>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "source_location available" || echo "source_location missing"
+        echo '#include <format>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "format available" || echo "format missing"
 
     - name: Install dependencies (macOS)
       if: startsWith(matrix.config.os, 'macos')
@@ -95,7 +131,14 @@ jobs:
 
     - name: Configure CMake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON
+        if [[ "${{ matrix.config.generators }}" == *"Visual Studio"* ]]; then
+          # For Visual Studio generators, let CMake auto-detect the compiler
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "${{ matrix.config.generators }}" -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON
+        else
+          # For other generators, specify the compiler explicitly
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON
+        fi
+      shell: bash
 
     - name: Build
       run: cmake --build build --config ${{ matrix.config.build_type }} --parallel
@@ -104,7 +147,7 @@ jobs:
       working-directory: build
       run: |
         if [ "${{ runner.os }}" = "Windows" ]; then
-          if [ "${{ matrix.config.generators }}" = "Visual Studio 17 2022" ]; then
+          if [ "${{ matrix.config.generators }}" = "Visual Studio 17 2022" ] || [ "${{ matrix.config.generators }}" = "Visual Studio 16 2019" ]; then
             ctest -C ${{ matrix.config.build_type }} --output-on-failure --verbose
           else
             ctest --output-on-failure --verbose

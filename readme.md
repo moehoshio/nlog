@@ -43,7 +43,7 @@ include(FetchContent)
 # Add NekoLog to your CMake project
 FetchContent_Declare(
     NekoLog
-    GIT_REPOSITORY https://github.com/moehoshio/nlog.git
+    GIT_REPOSITORY https://github.com/moehoshio/NekoLog.git
     GIT_TAG        main
 )
 FetchContent_MakeAvailable(NekoLog)
@@ -69,21 +69,21 @@ After installing the dependency, please continue:
 1. Clone or download the repository to your host
 
 ```shell
-git clone https://github.com/moehoshio/nlog.git
+git clone https://github.com/moehoshio/NekoLog.git
 ```
 
 or
 
 ```shell
-curl -L -o nlog.zip https://github.com/moehoshio/nlog/archive/refs/heads/main.zip
+curl -L -o nekolog.zip https://github.com/moehoshio/NekoLog/archive/refs/heads/main.zip
 
-unzip nlog.zip
+unzip nekolog.zip
 ```
 
 2. Copy the `include` folder to your include directory
 
 ```shell
-cp -r nlog/include/ /path/to/your/include/
+cp -r NekoLog/include/ /path/to/your/include/
 ```
 
 3. Include the header in your source code
@@ -411,7 +411,7 @@ This will skip test targets during the build process.
 
 ## See More
 
-- [NekoLog](https://github.com/moehoshio/nlog): An easy-to-use, modern, lightweight, and efficient C++20 logging library.
+- [NekoLog](https://github.com/moehoshio/NekoLog): An easy-to-use, modern, lightweight, and efficient C++20 logging library.
 - [NekoEvent](https://github.com/moehoshio/NekoEvent): A modern easy to use type-safe and high-performance event handling system for C++.
 - [NekoSchema](https://github.com/moehoshio/NekoSchema): A lightweight, header-only C++20 schema library.
 - [NekoSystem](https://github.com/moehoshio/NekoSystem): A modern C++20 cross-platform system utility library.

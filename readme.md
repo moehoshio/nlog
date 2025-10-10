@@ -75,9 +75,9 @@ git clone https://github.com/moehoshio/NekoLog.git
 or
 
 ```shell
-curl -L -o nekolog.zip https://github.com/moehoshio/NekoLog/archive/refs/heads/main.zip
+curl -L -o NekoLog.zip https://github.com/moehoshio/NekoLog/archive/refs/heads/main.zip
 
-unzip nekolog.zip
+unzip NekoLog.zip
 ```
 
 2. Copy the `include` folder to your include directory
@@ -365,16 +365,8 @@ cmake --build ./build --config Debug
 
 Then, you can run the tests with the following commands:
 
-Unix Makefile / Ninja generator：
-
 ```shell
-cmake --build ./build --target test
-```
-
-Visual Studio generator：
-
-```shell
-cmake --build ./build --config Debug --target RUN_TESTS
+cd ./build && ctest --output-on-failure
 ```
 
 If everything is set up correctly, you should see output similar to the following:

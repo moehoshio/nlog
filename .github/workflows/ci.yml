@@ -16,7 +16,7 @@ jobs:
         config:
           # Windows builds
           - {
-              name: "Windows MSVC 2022 Debug",
+              name: "Windows MSVC Debug",
               os: windows-latest,
               cc: "cl",
               cxx: "cl",
@@ -24,7 +24,7 @@ jobs:
               generators: "Visual Studio 17 2022"
             }
           - {
-              name: "Windows MSVC 2022 Release",
+              name: "Windows MSVC Release",
               os: windows-latest,
               cc: "cl",
               cxx: "cl",

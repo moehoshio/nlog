@@ -15,6 +15,7 @@ message(STATUS "  - Neko Build tests: ${NEKO_BUILD_TESTS}")
 message(STATUS "")
 message(STATUS "Dependency summary:")
 message(STATUS "  - GoogleTest support: ${GTest_FOUND}")
+message(STATUS "")
 
 
 if(NEKO_AUTO_FETCH_DEPS)

@@ -4,8 +4,6 @@ project(NekoLog VERSION 1.0 LANGUAGES CXX)
 option(NEKO_AUTO_FETCH_DEPS "Automatically fetch dependencies" ON)
 option(NEKO_BUILD_TESTS "Build tests" ON)
 
-find_package(GTest QUIET)
-
 # Print configuration summary
 message(STATUS "NekoFunction configuration summary:")
 message(STATUS "  - CMake version: ${CMAKE_VERSION}")
@@ -28,7 +26,7 @@ if(NEKO_AUTO_FETCH_DEPS)
     )
     FetchContent_MakeAvailable(NekoSchema)
 
-    if(NOT GTest_FOUND AND NEKO_BUILD_TESTS)
+    if(NEKO_BUILD_TESTS)
         message(STATUS "GTest not found. Fetching GoogleTest...")
 
         FetchContent_Declare(
@@ -60,8 +58,8 @@ if(NEKO_BUILD_TESTS)
     enable_testing()
     message(STATUS "NekoLog tests enabled")
 
-    if (NOT NEKO_AUTO_FETCH_DEPS AND NOT GTest_FOUND)
-        message(FATAL_ERROR "GTest is required for building tests. Please enable NEKO_AUTO_FETCH_DEPS or install GTest manually.")
+    if (NOT NEKO_AUTO_FETCH_DEPS)
+        message(FATAL_ERROR "GTest is required for building tests. Please enable NEKO_AUTO_FETCH_DEPS")
     endif()
 
     add_executable(nlog_test tests/nlog_test.cpp)

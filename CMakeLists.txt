@@ -5,10 +5,6 @@ project(NekoLog VERSION 1.0 LANGUAGES CXX)
 # === Config ====
 # ================
 
-# Neko Module common options
-option(NEKO_AUTO_FETCH_DEPS "Neko Automatically fetch dependencies" ON)
-option(NEKO_BUILD_TESTS "Neko Build tests" ON)
-
 # NekoLog project specific options
 option(NEKO_LOG_BUILD_TESTS "Neko Log Build tests" ON)
 option(NEKO_LOG_AUTO_FETCH_DEPS "Neko Log Automatically fetch dependencies" ON)
@@ -25,7 +21,7 @@ message(STATUS "Dependency summary:")
 message(STATUS "  - No dependencies required")
 message(STATUS "")
 
-if(NEKO_LOG_AUTO_FETCH_DEPS OR (NEKO_AUTO_FETCH_DEPS AND NEKO_LOG_FETCH_DEPS))
+if(NEKO_LOG_AUTO_FETCH_DEPS)
     include(FetchContent)
 
     FetchContent_Declare(
@@ -69,11 +65,11 @@ target_compile_features(NekoLog INTERFACE cxx_std_20)
 # ==== Tests =====
 # ================
 
-if(NEKO_LOG_BUILD_TESTS OR (NEKO_BUILD_TESTS AND NEKO_LOG_BUILD_TESTS))
+if(NEKO_LOG_BUILD_TESTS)
     enable_testing()
     message(STATUS "NekoLog tests enabled")
 
-    if (NOT NEKO_LOG_AUTO_FETCH_DEPS AND NOT NEKO_AUTO_FETCH_DEPS)
+    if (NOT NEKO_LOG_AUTO_FETCH_DEPS)
         message(FATAL_ERROR "GTest is required for building tests. Please enable NEKO_LOG_AUTO_FETCH_DEPS")
     endif()
 

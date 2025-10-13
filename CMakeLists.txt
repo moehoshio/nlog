@@ -1,22 +1,31 @@
 cmake_minimum_required(VERSION 3.14)
 project(NekoLog VERSION 1.0 LANGUAGES CXX)
 
-option(NEKO_AUTO_FETCH_DEPS "Automatically fetch dependencies" ON)
-option(NEKO_BUILD_TESTS "Build tests" ON)
+# ================
+# === Config ====
+# ================
+
+# Neko Module common options
+option(NEKO_AUTO_FETCH_DEPS "Neko Automatically fetch dependencies" ON)
+option(NEKO_BUILD_TESTS "Neko Build tests" ON)
+
+# NekoLog project specific options
+option(NEKO_LOG_BUILD_TESTS "Neko Log Build tests" ON)
+option(NEKO_LOG_AUTO_FETCH_DEPS "Neko Log Automatically fetch dependencies" ON)
 
 # Print configuration summary
-message(STATUS "NekoFunction configuration summary:")
+message(STATUS "Start configuration Neko Log...")
+message(STATUS "NekoLog configuration summary:")
 message(STATUS "  - CMake version: ${CMAKE_VERSION}")
 message(STATUS "")
-message(STATUS "  - Neko Auto fetch deps: ${NEKO_AUTO_FETCH_DEPS}")
-message(STATUS "  - Neko Build tests: ${NEKO_BUILD_TESTS}")
+message(STATUS "  - Neko Log Auto fetch deps: ${NEKO_LOG_AUTO_FETCH_DEPS}")
+message(STATUS "  - Neko Log Build tests: ${NEKO_LOG_BUILD_TESTS}")
 message(STATUS "")
 message(STATUS "Dependency summary:")
-message(STATUS "  - GoogleTest support: ${GTest_FOUND}")
+message(STATUS "  - No dependencies required")
 message(STATUS "")
 
-
-if(NEKO_AUTO_FETCH_DEPS)
+if(NEKO_LOG_AUTO_FETCH_DEPS OR (NEKO_AUTO_FETCH_DEPS AND NEKO_LOG_FETCH_DEPS))
     include(FetchContent)
 
     FetchContent_Declare(
@@ -26,8 +35,8 @@ if(NEKO_AUTO_FETCH_DEPS)
     )
     FetchContent_MakeAvailable(NekoSchema)
 
-    if(NEKO_BUILD_TESTS)
-        message(STATUS "GTest not found. Fetching GoogleTest...")
+    if(NEKO_LOG_BUILD_TESTS)
+        message(STATUS "Neko Log Fetching GoogleTest...")
 
         FetchContent_Declare(
             googletest
@@ -38,9 +47,12 @@ if(NEKO_AUTO_FETCH_DEPS)
         FetchContent_MakeAvailable(googletest)
     endif()
 
-endif(NEKO_AUTO_FETCH_DEPS)
+endif()
 
-# Main library target
+# ================
+# = Main target =
+# ================
+
 add_library(NekoLog INTERFACE)
 add_library(Neko::Log ALIAS NekoLog)
 
@@ -53,13 +65,16 @@ target_include_directories(NekoLog INTERFACE
 target_link_libraries(NekoLog INTERFACE NekoSchema)
 target_compile_features(NekoLog INTERFACE cxx_std_20)
 
-# Tests
-if(NEKO_BUILD_TESTS)
+# ================
+# ==== Tests =====
+# ================
+
+if(NEKO_LOG_BUILD_TESTS OR (NEKO_BUILD_TESTS AND NEKO_LOG_BUILD_TESTS))
     enable_testing()
     message(STATUS "NekoLog tests enabled")
 
-    if (NOT NEKO_AUTO_FETCH_DEPS)
-        message(FATAL_ERROR "GTest is required for building tests. Please enable NEKO_AUTO_FETCH_DEPS")
+    if (NOT NEKO_LOG_AUTO_FETCH_DEPS AND NOT NEKO_AUTO_FETCH_DEPS)
+        message(FATAL_ERROR "GTest is required for building tests. Please enable NEKO_LOG_AUTO_FETCH_DEPS")
     endif()
 
     add_executable(nlog_test tests/nlog_test.cpp)
@@ -72,3 +87,5 @@ if(NEKO_BUILD_TESTS)
 else()
     message(STATUS "NekoLog tests disabled (NEKO_BUILD_TESTS=OFF)")
 endif()
+
+message(STATUS "End Neko Log")

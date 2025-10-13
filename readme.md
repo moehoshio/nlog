@@ -354,7 +354,10 @@ You can run the tests to verify that everything is working correctly.
 If you haven't configured the build yet, please run:
 
 ```shell
-cmake -B ./build . -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON
+# Global options
+cmake -B ./build -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON -S .
+# or specific to NekoLog
+cmake -B ./build -DNEKO_LOG_BUILD_TESTS=ON -DNEKO_LOG_AUTO_FETCH_DEPS=ON -S .
 ```
 
 Now, you can build the test files (you must build them manually at least once before running the tests!).
@@ -403,6 +406,7 @@ This will skip test targets during the build process.
 
 ## See More
 
+- [NekoNet](https://github.com/moehoshio/NekoNet): A modern , easy-to-use C++20 networking library via libcurl.
 - [NekoLog](https://github.com/moehoshio/NekoLog): An easy-to-use, modern, lightweight, and efficient C++20 logging library.
 - [NekoEvent](https://github.com/moehoshio/NekoEvent): A modern easy to use type-safe and high-performance event handling system for C++.
 - [NekoSchema](https://github.com/moehoshio/NekoSchema): A lightweight, header-only C++20 schema library.

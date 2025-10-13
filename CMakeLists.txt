@@ -81,7 +81,7 @@ if(NEKO_LOG_BUILD_TESTS)
     include(GoogleTest)
     gtest_discover_tests(nlog_test)
 else()
-    message(STATUS "NekoLog tests disabled (NEKO_BUILD_TESTS=OFF)")
+    message(STATUS "NekoLog tests disabled (NEKO_LOG_BUILD_TESTS=OFF)")
 endif()
 
 message(STATUS "End Neko Log")

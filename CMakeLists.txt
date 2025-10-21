@@ -8,8 +8,9 @@ project(NekoLog VERSION 1.0 LANGUAGES CXX)
 # NekoLog project specific options
 option(NEKO_LOG_BUILD_TESTS "Neko Log Build tests" ON)
 option(NEKO_LOG_AUTO_FETCH_DEPS "Neko Log Automatically fetch dependencies" ON)
+option(NEKO_LOG_USE_MODULES "Neko Log Use C++20 modules" OFF)
 
-find_package(GTest CONFIG QUIET)
+find_package(GTest QUIET)
 
 # Print configuration summary
 message(STATUS "Start configuration Neko Log...")
@@ -19,6 +20,7 @@ message(STATUS "  - CMake version: ${CMAKE_VERSION}")
 message(STATUS "")
 message(STATUS "  - Neko Log Auto fetch deps: ${NEKO_LOG_AUTO_FETCH_DEPS}")
 message(STATUS "  - Neko Log Build tests: ${NEKO_LOG_BUILD_TESTS}")
+message(STATUS "  - Neko Log Use modules: ${NEKO_LOG_USE_MODULES}")
 message(STATUS "")
 message(STATUS "Dependency summary:")
 message(STATUS "  - GTest : ${GTest_FOUND} version : ${GTest_VERSION}")
@@ -35,7 +37,7 @@ if(NEKO_LOG_AUTO_FETCH_DEPS)
     FetchContent_MakeAvailable(NekoSchema)
 
     if(NOT GTEST_FOUND AND NEKO_LOG_BUILD_TESTS)
-        message(STATUS "Neko Log Fetching GoogleTest...")
+        message(STATUS "GTest Not Found ; Neko Log is Fetching GoogleTest...")
 
         FetchContent_Declare(
             googletest
@@ -52,17 +54,46 @@ endif()
 # = Main target =
 # ================
 
-add_library(NekoLog INTERFACE)
-add_library(Neko::Log ALIAS NekoLog)
+if(NEKO_LOG_USE_MODULES)
+    # Module-based library (wrapper module)
+    add_library(NekoLog)
+    add_library(Neko::Log ALIAS NekoLog)
+    
+    target_sources(NekoLog
+        PUBLIC
+            FILE_SET CXX_MODULES FILES
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/log/nlog.ixx
+    )
+    
+    target_include_directories(NekoLog PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
+    
+    # Dependencies
+    target_link_libraries(NekoLog PUBLIC NekoSchema)
+    target_compile_features(NekoLog PUBLIC cxx_std_20)
+    
+    # Enable C++20 modules
+    set_target_properties(NekoLog PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
+else()
+    # Traditional header-only library
+    add_library(NekoLog INTERFACE)
+    add_library(Neko::Log ALIAS NekoLog)
 
-target_include_directories(NekoLog INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+    target_include_directories(NekoLog INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
 
-# Dependencies
-target_link_libraries(NekoLog INTERFACE NekoSchema)
-target_compile_features(NekoLog INTERFACE cxx_std_20)
+    # Dependencies
+    target_link_libraries(NekoLog INTERFACE NekoSchema)
+    target_compile_features(NekoLog INTERFACE cxx_std_20)
+endif()
 
 # ================
 # ==== Tests =====
@@ -84,6 +115,22 @@ if(NEKO_LOG_BUILD_TESTS)
 
     include(GoogleTest)
     gtest_discover_tests(nlog_test)
+    
+    # Module test (if modules are enabled)
+    if(NEKO_LOG_USE_MODULES)
+        add_executable(nlog_module_test tests/nlog_module_test.cpp)
+        target_link_libraries(nlog_module_test PRIVATE NekoLog GTest::gtest GTest::gtest_main)
+        target_compile_features(nlog_module_test PRIVATE cxx_std_20)
+        
+        set_target_properties(nlog_module_test PROPERTIES
+            CXX_STANDARD 20
+            CXX_STANDARD_REQUIRED ON
+            CXX_EXTENSIONS OFF
+        )
+        
+        gtest_discover_tests(nlog_module_test)
+    endif()
+    
 else()
     message(STATUS "NekoLog tests disabled (NEKO_LOG_BUILD_TESTS=OFF)")
 endif()

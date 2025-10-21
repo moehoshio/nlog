@@ -10,6 +10,7 @@ Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 
 
 - No Macro
 - Header Only (No build/link required)
+- **C++20 Modules Support** - Optional modern module interface
 - Auto SrcLoc (Automatically capture source code location)
 - Supports multiple appenders (Console, File, Custom)
 - Supports custom formatted log messages
@@ -60,6 +61,13 @@ target_link_libraries(your_target PRIVATE Neko::Log)
 #include <neko/log/nlog.hpp>
 ```
 
+**Or use C++20 modules (optional):**
+
+```cpp
+import neko.log;  // Requires -DNEKO_LOG_USE_MODULES=ON
+```
+
+
 ### Manual
 
 When installing manually, you need to manually fetch the dependency [`NekoSchema`](https://github.com/moehoshio/NekoSchema).
@@ -90,6 +98,12 @@ cp -r NekoLog/include/ /path/to/your/include/
 
 ```cpp
 #include <neko/log/nlog.hpp>
+```
+
+**Or use C++20 modules (optional):**
+
+```cpp
+import neko.log;  // Requires -DNEKO_LOG_USE_MODULES=ON
 ```
 
 ### Basic Example

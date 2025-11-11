@@ -183,9 +183,9 @@ TEST(NLogModuleTest, FormattedLogging) {
     std::string name = "Test";
 
     // Test formatted logging
-    log::info(loc, "Value: {}, Name: {}", value, name);
-    log::warn(loc, "Warning code: {:04}", value);
-    log::error(loc, "Error at position {}", value);
+    log::info("Value: {}, Name: {}", loc , value, name);
+    log::warn("Warning code: {:04}", loc , value);
+    log::error("Error at position {}", loc , value);
 
     log::flushLog();
 

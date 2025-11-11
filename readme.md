@@ -64,7 +64,7 @@ target_link_libraries(your_target PRIVATE Neko::Log)
 **Or use C++20 modules (optional):**
 
 ```cpp
-import neko.log;  // Requires -DNEKO_LOG_USE_MODULES=ON
+import neko.log;  // Requires CMake use -DNEKO_LOG_USE_MODULES=ON
 ```
 
 
@@ -98,12 +98,6 @@ cp -r NekoLog/include/ /path/to/your/include/
 
 ```cpp
 #include <neko/log/nlog.hpp>
-```
-
-**Or use C++20 modules (optional):**
-
-```cpp
-import neko.log;  // Requires -DNEKO_LOG_USE_MODULES=ON
 ```
 
 ### Basic Example
@@ -152,9 +146,9 @@ debug("msg"); // (basic format)... msg
 And with format arguments (via std::format):
 ```cpp
     template <typename... Args>
-    void debug(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args);
+    void debug(std::format_string<Args...> fmt, const neko::SrcLocInfo &location, Args &&...args);
 
-    debug( {} , "Hello , {} . 1 + 1 = {}", "World" , 1 + 1); // (basic format)... Hello , World . 1 + 1 = 2
+    debug("Hello , {} . 1 + 1 = {}", "World" , {} , 1 + 1); // (basic format)... Hello , World . 1 + 1 = 2
 ```
 Functions for other levels are the same.
 

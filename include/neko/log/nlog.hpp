@@ -595,25 +595,25 @@ namespace neko::log {
         // === formatted message logging ===
 
         template <typename... Args>
-        void debug(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+        void debug(std::format_string<Args...> fmt, const neko::SrcLocInfo &location,  Args &&...args) {
             auto message = std::format(fmt, std::forward<Args>(args)...);
             log(Level::Debug, message, location);
         }
 
         template <typename... Args>
-        void info(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+        void info(std::format_string<Args...> fmt, const neko::SrcLocInfo &location,  Args &&...args) {
             auto message = std::format(fmt, std::forward<Args>(args)...);
             log(Level::Info, message, location);
         }
 
         template <typename... Args>
-        void warn(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+        void warn(std::format_string<Args...> fmt, const neko::SrcLocInfo &location,  Args &&...args) {
             auto message = std::format(fmt, std::forward<Args>(args)...);
             log(Level::Warn, message, location);
         }
 
         template <typename... Args>
-        void error(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+        void error(std::format_string<Args...> fmt, const neko::SrcLocInfo &location,  Args &&...args) {
             auto message = std::format(fmt, std::forward<Args>(args)...);
             log(Level::Error, message, location);
         }
@@ -697,22 +697,22 @@ namespace neko::log {
     }
 
     template <typename... Args>
-    void debug(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+    void debug(std::format_string<Args...> fmt, const neko::SrcLocInfo &location,  Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
         logger.debug(message, location);
     }
     template <typename... Args>
-    void info(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+    void info(std::format_string<Args...> fmt, const neko::SrcLocInfo &location,  Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
         logger.info(message, location);
     }
     template <typename... Args>
-    void warn(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+    void warn(std::format_string<Args...> fmt, const neko::SrcLocInfo &location,  Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
         logger.warn(message, location);
     }
     template <typename... Args>
-    void error(const neko::SrcLocInfo &location, std::format_string<Args...> fmt, Args &&...args) {
+    void error(std::format_string<Args...> fmt, const neko::SrcLocInfo &location,  Args &&...args) {
         auto message = std::format(fmt, std::forward<Args>(args)...);
         logger.error(message, location);
     }

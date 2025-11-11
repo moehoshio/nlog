@@ -31,6 +31,22 @@ jobs:
               build_type: "Release",
               generators: "Visual Studio 17 2022"
             }
+          - {
+              name: "Windows Clang Debug",
+              os: windows-latest,
+              cc: "clang",
+              cxx: "clang++",
+              build_type: "Debug",
+              generators: "Visual Studio 17 2022"
+            }
+          - {
+              name: "Windows Clang Release",
+              os: windows-latest,
+              cc: "clang",
+              cxx: "clang++",
+              build_type: "Release",
+              generators: "Visual Studio 17 2022"
+            }
           
           # Linux builds
           - {
@@ -46,6 +62,22 @@ jobs:
               os: ubuntu-latest,
               cc: "gcc",
               cxx: "g++",
+              build_type: "Release",
+              generators: "Unix Makefiles"
+            }
+          - {
+              name: "Ubuntu Clang Debug",
+              os: ubuntu-latest,
+              cc: "clang",
+              cxx: "clang++",
+              build_type: "Debug",
+              generators: "Unix Makefiles"
+            }
+          - {
+              name: "Ubuntu Clang Release",
+              os: ubuntu-latest,
+              cc: "clang",
+              cxx: "clang++",
               build_type: "Release",
               generators: "Unix Makefiles"
             }
@@ -67,6 +99,23 @@ jobs:
               build_type: "Release",
               generators: "Unix Makefiles"
             }
+          - {
+              name: "macOS GCC Debug",
+              os: macos-latest,
+              cc: "gcc",
+              cxx: "g++",
+              build_type: "Debug",
+              generators: "Unix Makefiles"
+            }
+          - {
+              name: "macOS GCC Release",
+              os: macos-latest,
+              cc: "gcc",
+              cxx: "g++",
+              build_type: "Release",
+              generators: "Unix Makefiles"
+            }
+
 
     steps:
     - name: Checkout
@@ -83,33 +132,28 @@ jobs:
       if: startsWith(matrix.config.os, 'ubuntu')
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake ninja-build software-properties-common
+        sudo apt-get install -y build-essential cmake ninja-build
         
-        # Install GCC-13 from toolchain PPA
-        if [[ "${{ matrix.config.cxx }}" == g++-13 ]]; then
-          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-          sudo apt-get update
-          sudo apt-get install -y gcc-13 g++-13
-        # Install Clang-16 from LLVM APT repository
-        elif [[ "${{ matrix.config.cxx }}" == clang++-16 ]]; then
-          wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
-          sudo apt-get install -y clang-16 clang++-16
-        # Install other Clang versions
-        elif [[ "${{ matrix.config.cxx }}" == clang* ]]; then
-          sudo apt-get install -y ${{ matrix.config.cxx }}
+        # For Clang builds, use the system default clang
+        # Ubuntu 24.04 (noble) comes with clang-18 by default
+        if [[ "${{ matrix.config.cxx }}" == "clang++" ]]; then
+          # System default clang is already installed
+          echo "Using system default clang"
+          clang++ --version
+        # For GCC builds
+        elif [[ "${{ matrix.config.cxx }}" == "g++" ]]; then
+          # System default g++ is already installed via build-essential
+          echo "Using system default g++"
+          g++ --version
         fi
 
-    - name: Check compiler versions (Debug)
+    - name: Check compiler versions
       if: startsWith(matrix.config.os, 'ubuntu')
       run: |
         echo "=== Compiler Information ==="
         ${{ matrix.config.cxx }} --version
         echo "=== CMake Information ==="
         cmake --version
-        echo "=== Standard Library Check ==="
-        echo '#include <version>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "C++20 headers available" || echo "C++20 headers missing"
-        echo '#include <source_location>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "source_location available" || echo "source_location missing"
-        echo '#include <format>' | ${{ matrix.config.cxx }} -std=c++20 -x c++ -E - 2>/dev/null && echo "format available" || echo "format missing"
 
     - name: Install dependencies (macOS)
       if: startsWith(matrix.config.os, 'macos')

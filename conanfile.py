@@ -24,7 +24,10 @@ class NekoLogConan(ConanFile):
     no_copy_source = True
 
     def requirements(self):
-        self.requires("nekoschema/1.0@moehoshio/stable")
+        # NekoSchema will be automatically fetched via FetchContent when NEKO_LOG_AUTO_FETCH_DEPS=ON
+        # Once NekoSchema is published to Conan, uncomment the line below:
+        # self.requires("nekoschema/1.0")
+        pass
 
     def build_requirements(self):
         if self.options.build_tests:
@@ -39,7 +42,8 @@ class NekoLogConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["NEKO_LOG_BUILD_TESTS"] = self.options.build_tests
         tc.variables["NEKO_LOG_USE_MODULES"] = self.options.use_modules
-        tc.variables["NEKO_LOG_AUTO_FETCH_DEPS"] = False
+        # Enable auto-fetch to get NekoSchema via FetchContent until it's published to Conan
+        tc.variables["NEKO_LOG_AUTO_FETCH_DEPS"] = True
         tc.generate()
 
     def build(self):
@@ -57,4 +61,6 @@ class NekoLogConan(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "Neko::Log")
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
-        self.cpp_info.requires = ["nekoschema::nekoschema"]
+        # NekoSchema dependency is handled via FetchContent in CMakeLists.txt
+        # Once NekoSchema is published to Conan, uncomment:
+        # self.cpp_info.requires = ["nekoschema::nekoschema"]

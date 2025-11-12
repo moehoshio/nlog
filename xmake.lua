@@ -13,14 +13,17 @@ package("nekolog")
     add_configs("tests", {description = "Build tests", default = false, type = "boolean"})
 
     add_deps("cmake")
-    add_deps("nekoschema")
+    -- NekoSchema dependency will be fetched via FetchContent until it's published to xmake-repo
+    -- Uncomment when NekoSchema is available:
+    -- add_deps("nekoschema")
 
     on_install(function (package)
         local configs = {}
         table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:debug() and "Debug" or "Release"))
         table.insert(configs, "-DNEKO_LOG_BUILD_TESTS=" .. (package:config("tests") and "ON" or "OFF"))
         table.insert(configs, "-DNEKO_LOG_USE_MODULES=" .. (package:config("modules") and "ON" or "OFF"))
-        table.insert(configs, "-DNEKO_LOG_AUTO_FETCH_DEPS=OFF")
+        -- Enable auto-fetch to get NekoSchema via FetchContent
+        table.insert(configs, "-DNEKO_LOG_AUTO_FETCH_DEPS=ON")
         
         import("package.tools.cmake").install(package, configs)
     end)

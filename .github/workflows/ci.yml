@@ -177,10 +177,10 @@ jobs:
       run: |
         if [[ "${{ matrix.config.generators }}" == *"Visual Studio"* ]]; then
           # For Visual Studio generators, let CMake auto-detect the compiler
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "${{ matrix.config.generators }}" -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "${{ matrix.config.generators }}" -DNEKO_LOG_BUILD_TESTS=ON -DNEKO_LOG_AUTO_FETCH_DEPS=ON
         else
           # For other generators, specify the compiler explicitly
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_LOG_BUILD_TESTS=ON -DNEKO_LOG_AUTO_FETCH_DEPS=ON
         fi
       shell: bash
 

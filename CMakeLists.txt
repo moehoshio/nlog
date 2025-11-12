@@ -28,7 +28,7 @@ message(STATUS "")
 
 if(NEKO_LOG_AUTO_FETCH_DEPS)
     include(FetchContent)
-
+    
     FetchContent_Declare(
         NekoSchema
         GIT_REPOSITORY https://github.com/moehoshio/NekoSchema.git
@@ -80,6 +80,11 @@ if(NEKO_LOG_USE_MODULES)
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
     )
+
+    if(MSVC)
+        target_compile_options(NekoLog PUBLIC /Zc:__cplusplus)
+    endif(MSVC)
+
 else()
     # Traditional header-only library
     add_library(NekoLog INTERFACE)
@@ -93,6 +98,11 @@ else()
     # Dependencies
     target_link_libraries(NekoLog INTERFACE NekoSchema)
     target_compile_features(NekoLog INTERFACE cxx_std_20)
+
+    if(MSVC)
+        target_compile_options(NekoLog INTERFACE /Zc:__cplusplus)
+    endif(MSVC)
+
 endif()
 
 # ================

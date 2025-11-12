@@ -174,7 +174,6 @@ endif()
 # Install export targets
 install(EXPORT NekoLogTargets
     FILE NekoLogTargets.cmake
-    NAMESPACE Neko::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/NekoLog
 )
 

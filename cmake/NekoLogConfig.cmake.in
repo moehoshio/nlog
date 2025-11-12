@@ -27,4 +27,10 @@ endif()
 # Include the targets file
 include("${CMAKE_CURRENT_LIST_DIR}/NekoLogTargets.cmake")
 
+# Create the Neko::Log alias if it doesn't exist
+# (it exists in build tree but not after installation)
+if(TARGET NekoLog AND NOT TARGET Neko::Log)
+    add_library(Neko::Log ALIAS NekoLog)
+endif()
+
 check_required_components(NekoLog)

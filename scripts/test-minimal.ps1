@@ -20,7 +20,9 @@ project(MinimalTest CXX)
 find_package(NekoLog REQUIRED CONFIG)
 
 message(STATUS "NekoLog found successfully!")
-message(STATUS "NekoSchema target exists: `${TARGET NekoSchema}")
+if(TARGET NekoSchema)
+    message(STATUS "NekoSchema target exists via FetchContent")
+endif()
 
 add_executable(test_app main.cpp)
 target_link_libraries(test_app PRIVATE Neko::Log)

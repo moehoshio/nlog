@@ -8,6 +8,7 @@ package("nekolog")
              "https://github.com/moehoshio/NekoLog.git")
 
     add_versions("1.0.0", "5FAD6EBF1C117FA68831F9D70110F5A3F5EAAC6C3DD00F002D8FE434AB2C5B65")
+    add_versions("1.0.1", "21A11DB28E2E8FE59D102CD4E6721CC62759FAA003AA37C85A2CF505C9FEA770")
 
     add_configs("modules", {description = "Enable C++20 modules support", default = false, type = "boolean"})
     add_configs("tests", {description = "Build tests", default = false, type = "boolean"})

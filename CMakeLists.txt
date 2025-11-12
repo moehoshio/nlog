@@ -160,6 +160,17 @@ install(TARGETS NekoLog
     FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
+# If NekoSchema was fetched via FetchContent, also install it
+if(NEKO_LOG_AUTO_FETCH_DEPS AND TARGET NekoSchema)
+    install(TARGETS NekoSchema
+        EXPORT NekoLogTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+endif()
+
 # Install export targets
 install(EXPORT NekoLogTargets
     FILE NekoLogTargets.cmake

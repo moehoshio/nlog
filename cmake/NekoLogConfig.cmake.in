@@ -3,16 +3,17 @@
 include(CMakeFindDependencyMacro)
 
 # Find dependencies
-# Try to find NekoSchema, but make it optional if using vcpkg overlay
+# Try to find NekoSchema, but if not found, fetch it
 find_dependency(NekoSchema QUIET)
 
-if(NOT NekoSchema_FOUND)
-    message(STATUS "NekoSchema not found, attempting to fetch from git...")
+if(NOT NekoSchema_FOUND AND NOT TARGET NekoSchema)
+    message(STATUS "NekoSchema not found in package config, attempting to fetch from git...")
     include(FetchContent)
     FetchContent_Declare(
         NekoSchema
         GIT_REPOSITORY https://github.com/moehoshio/NekoSchema.git
         GIT_TAG        main
+        FIND_PACKAGE_ARGS
     )
     FetchContent_MakeAvailable(NekoSchema)
 endif()

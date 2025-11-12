@@ -1,21 +1,27 @@
 @PACKAGE_INIT@
 
-include(CMakeFindDependencyMacro)
-
 # Find dependencies
-# Try to find NekoSchema, but if not found, fetch it
-find_dependency(NekoSchema QUIET)
+# Try to find NekoSchema, but make it optional
+find_package(NekoSchema QUIET CONFIG)
 
 if(NOT NekoSchema_FOUND AND NOT TARGET NekoSchema)
-    message(STATUS "NekoSchema not found in package config, attempting to fetch from git...")
+    message(STATUS "NekoSchema not found via find_package, attempting to fetch from git...")
+    
+    # Use FetchContent as fallback
     include(FetchContent)
     FetchContent_Declare(
         NekoSchema
         GIT_REPOSITORY https://github.com/moehoshio/NekoSchema.git
         GIT_TAG        main
-        FIND_PACKAGE_ARGS
+        FIND_PACKAGE_ARGS NAMES NekoSchema
     )
+    
+    # Make NekoSchema available
     FetchContent_MakeAvailable(NekoSchema)
+    
+    if(NOT TARGET NekoSchema)
+        message(WARNING "NekoSchema could not be found or fetched. NekoLog may not work correctly.")
+    endif()
 endif()
 
 # Include the targets file

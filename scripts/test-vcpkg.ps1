@@ -21,12 +21,21 @@ Write-Host "  Testing NekoLog vcpkg Port" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-$rootDir = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+# Get the NekoLog root directory (parent of scripts/)
+$rootDir = Split-Path -Parent $PSScriptRoot
 $portDir = Join-Path $rootDir "ports\nekolog"
 
+Write-Host "NekoLog root: $rootDir" -ForegroundColor Gray
 Write-Host "vcpkg root: $VcpkgRoot" -ForegroundColor Gray
 Write-Host "Port directory: $portDir" -ForegroundColor Gray
 Write-Host ""
+
+# Verify port directory exists
+if (-not (Test-Path $portDir)) {
+    Write-Error "Port directory not found at: $portDir"
+    Write-Host "Please ensure you're running this script from the NekoLog repository" -ForegroundColor Yellow
+    exit 1
+}
 
 Set-Location $VcpkgRoot
 

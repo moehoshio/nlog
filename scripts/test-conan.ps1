@@ -7,7 +7,11 @@ Write-Host "  Testing NekoLog Conan Package" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-$rootDir = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+# Get the NekoLog root directory (parent of scripts/)
+$rootDir = Split-Path -Parent $PSScriptRoot
+Write-Host "NekoLog root: $rootDir" -ForegroundColor Gray
+Write-Host ""
+
 Set-Location $rootDir
 
 Write-Host "[1/3] Creating Conan package from source..." -ForegroundColor Yellow

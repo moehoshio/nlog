@@ -7,7 +7,7 @@ package("nekolog")
     set_urls("https://github.com/moehoshio/NekoLog/archive/refs/tags/v$(version).tar.gz",
              "https://github.com/moehoshio/NekoLog.git")
 
-    add_versions("1.0.0", "")  -- Add SHA256 when creating release
+    add_versions("1.0.0", "5FAD6EBF1C117FA68831F9D70110F5A3F5EAAC6C3DD00F002D8FE434AB2C5B65")
 
     add_configs("modules", {description = "Enable C++20 modules support", default = false, type = "boolean"})
     add_configs("tests", {description = "Build tests", default = false, type = "boolean"})

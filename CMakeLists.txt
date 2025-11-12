@@ -135,4 +135,56 @@ else()
     message(STATUS "NekoLog tests disabled (NEKO_LOG_BUILD_TESTS=OFF)")
 endif()
 
+# ================
+# == Install =====
+# ================
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+# Install headers
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING 
+    PATTERN "*.hpp"
+    PATTERN "*.ixx"
+)
+
+# Install targets
+install(TARGETS NekoLog
+    EXPORT NekoLogTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# Install export targets
+install(EXPORT NekoLogTargets
+    FILE NekoLogTargets.cmake
+    NAMESPACE Neko::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/NekoLog
+)
+
+# Create and install Config file
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/NekoLogConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/NekoLogConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/NekoLog
+)
+
+# Create and install Version file
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/NekoLogConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/NekoLogConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/NekoLogConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/NekoLog
+)
+
 message(STATUS "Neko Log End of configuration")

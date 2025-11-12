@@ -32,7 +32,7 @@ int main() {
     SrcLocInfo loc;
     int port = 8080;
     std::string service = "WebServer";
-    log::info(loc, "Starting {} on port {}", service, port);
+    log::info("Starting {} on port {}", loc, service, port);
     
     // Multi-threaded logging
     std::thread worker([&]() {
@@ -40,7 +40,7 @@ int main() {
         log::info("Worker thread started");
         
         for (int i = 0; i < 3; ++i) {
-            log::info(loc, "Processing task {}", i + 1);
+            log::info("Processing task {}", loc, i + 1);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         

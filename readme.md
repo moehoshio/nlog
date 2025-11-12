@@ -26,7 +26,7 @@ Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 
 ## Quick Start
 
 Configure:
-[CMake](#cmake) | [Manual](#manual) | [Tests](#testing)
+[CMake](#cmake) | [Conan](#conan) | [vcpkg](#vcpkg) | [xmake](#xmake) | [Manual](#manual) | [Tests](#testing)
 
 Example:
 [Basic](#basic-example) | [Logging](#logging) | [Level](#level) | [Set Thread Name](#set-thread-name) | [RAII Scope Logging](#raii-scope-logging)
@@ -55,7 +55,14 @@ add_executable(your_target main.cpp)
 target_link_libraries(your_target PRIVATE Neko::Log)
 ```
 
-2. Include the header in your source code
+2. Or using `find_package` if NekoLog is installed:
+
+```cmake
+find_package(NekoLog CONFIG REQUIRED)
+target_link_libraries(your_target PRIVATE Neko::Log)
+```
+
+3. Include the header in your source code
 
 ```cpp
 #include <neko/log/nlog.hpp>
@@ -67,6 +74,68 @@ target_link_libraries(your_target PRIVATE Neko::Log)
 import neko.log;  // Requires CMake use -DNEKO_LOG_USE_MODULES=ON
 ```
 
+### Conan
+
+1. Add NekoLog to your `conanfile.txt`:
+
+```ini
+[requires]
+nekolog/1.0.0
+
+[generators]
+CMakeDeps
+CMakeToolchain
+```
+
+2. Install dependencies and configure your project:
+
+```shell
+conan install . --output-folder=build --build=missing
+cmake -B build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake
+cmake --build build
+```
+
+3. Link in your `CMakeLists.txt`:
+
+```cmake
+find_package(NekoLog CONFIG REQUIRED)
+target_link_libraries(your_target PRIVATE Neko::Log)
+```
+
+### vcpkg
+
+1. Add NekoLog as an overlay port to your vcpkg installation:
+
+```shell
+git clone https://github.com/moehoshio/NekoLog.git
+vcpkg install nekolog --overlay-ports=NekoLog/ports/nekolog
+```
+
+2. Use in your `CMakeLists.txt`:
+
+```cmake
+find_package(NekoLog CONFIG REQUIRED)
+target_link_libraries(your_target PRIVATE Neko::Log)
+```
+
+### xmake
+
+1. Add NekoLog to your `xmake.lua`:
+
+```lua
+add_requires("nekolog")
+
+target("your_target")
+    set_kind("binary")
+    add_files("src/*.cpp")
+    add_packages("nekolog")
+```
+
+2. Install and build:
+
+```shell
+xmake
+```
 
 ### Manual
 
@@ -362,9 +431,6 @@ You can run the tests to verify that everything is working correctly.
 If you haven't configured the build yet, please run:
 
 ```shell
-# Global options
-cmake -B ./build -DNEKO_BUILD_TESTS=ON -DNEKO_AUTO_FETCH_DEPS=ON -S .
-# or specific to NekoLog
 cmake -B ./build -DNEKO_LOG_BUILD_TESTS=ON -DNEKO_LOG_AUTO_FETCH_DEPS=ON -S .
 ```
 
@@ -403,7 +469,7 @@ If everything is set up correctly, you should see output similar to the followin
 If you want to disable building and running tests, you can set the following CMake option when configuring your project:
 
 ```shell
-cmake -B ./build . -DNEKO_BUILD_TESTS=OFF
+cmake -B ./build . -DNEKO_LOG_BUILD_TESTS=OFF
 ```
 
 This will skip test targets during the build process.

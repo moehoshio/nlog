@@ -1,0 +1,4 @@
+sources:
+  "1.0.0":
+    url: "https://github.com/moehoshio/NekoLog/archive/refs/tags/v1.0.0.tar.gz"
+    sha256: "PUT_ACTUAL_SHA256_HERE_AFTER_CREATING_GITHUB_RELEASE"

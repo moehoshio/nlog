@@ -26,7 +26,7 @@ Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 
 ## Quick Start
 
 Configure:
-[CMake](#cmake) | [Conan](#conan) | [vcpkg](#vcpkg) | [xmake](#xmake) | [Manual](#manual) | [Tests](#testing)
+[CMake](#cmake) | [Conan](#conan) | [vcpkg](#vcpkg) | [Manual](#manual) | [Tests](#testing)
 
 Example:
 [Basic](#basic-example) | [Logging](#logging) | [Level](#level) | [Set Thread Name](#set-thread-name) | [RAII Scope Logging](#raii-scope-logging)
@@ -116,25 +116,6 @@ vcpkg install nekolog --overlay-ports=NekoLog/ports/nekolog
 ```cmake
 find_package(NekoLog CONFIG REQUIRED)
 target_link_libraries(your_target PRIVATE Neko::Log)
-```
-
-### xmake
-
-1. Add NekoLog to your `xmake.lua`:
-
-```lua
-add_requires("nekolog")
-
-target("your_target")
-    set_kind("binary")
-    add_files("src/*.cpp")
-    add_packages("nekolog")
-```
-
-2. Install and build:
-
-```shell
-xmake
 ```
 
 ### Manual

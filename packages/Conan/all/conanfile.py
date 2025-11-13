@@ -1,4 +1,4 @@
-from conan import ConanFile
+﻿from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout
 from conan.tools.files import copy, get
 import os
@@ -9,7 +9,7 @@ class NekoLogConan(ConanFile):
     # version is managed by config.yml in ConanCenter
     license = "MIT OR Apache-2.0"
     author = "Hoshi <moehoshio>"
-    url = "https://github.com/conan-io/conan-center-index"
+    url = "https://github.com/moehoshio/NekoLog"
     homepage = "https://github.com/moehoshio/NekoLog"
     description = "An easy-to-use, modern, lightweight, and efficient C++20 logging library"
     topics = ("logging", "cpp20", "header-only", "async")
@@ -20,11 +20,11 @@ class NekoLogConan(ConanFile):
     
     options = {
         "build_tests": [True, False],
-        "use_modules": [True, False],
+        "enable_modules": [True, False],
     }
     default_options = {
         "build_tests": False,
-        "use_modules": False,
+        "enable_modules": False,
     }
     
     # Header-only library
@@ -33,11 +33,11 @@ class NekoLogConan(ConanFile):
     
     options = {
         "build_tests": [True, False],
-        "use_modules": [True, False],
+        "enable_modules": [True, False],
     }
     default_options = {
         "build_tests": False,
-        "use_modules": False,
+        "enable_modules": False,
     }
     
     def export_sources(self):
@@ -62,9 +62,8 @@ class NekoLogConan(ConanFile):
         # Uncomment the line below for local Windows testing:
         # tc.generator = "Visual Studio 17 2022"
         # For ConanCenter submission, keep Ninja (comment out the above line)
-        tc.generator = "Ninja"
-        tc.variables["NEKO_LOG_BUILD_TESTS"] = False  # Don't build tests in ConanCenter
-        tc.variables["NEKO_LOG_USE_MODULES"] = False  # Disable modules for compatibility
+        tc.variables["NEKO_LOG_BUILD_TESTS"] = self.options.build_tests
+        tc.variables["NEKO_LOG_ENABLE_MODULES"] = self.options.enable_modules
         # Enable auto-fetch to get NekoSchema via FetchContent
         tc.variables["NEKO_LOG_AUTO_FETCH_DEPS"] = True
         # Tell NekoSchema not to build tests (prevents GoogleTest installation)
@@ -91,4 +90,4 @@ class NekoLogConan(ConanFile):
         self.cpp_info.libdirs = []
         # NekoSchema dependency is handled via FetchContent in CMakeLists.txt
         # Once NekoSchema is published to Conan, uncomment:
-        # self.cpp_info.requires = ["nekoschema::nekoschema"]
+        # self.cpp_info.requires = ["neko-schema::neko-schema"]

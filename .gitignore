@@ -4,6 +4,7 @@
 .idea/
 xcuserdata/
 *.code-workspace
+.downloads/
 
 # Build folders
 build/

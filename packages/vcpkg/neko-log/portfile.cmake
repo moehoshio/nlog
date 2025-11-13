@@ -8,7 +8,6 @@
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        tests   NEKO_LOG_BUILD_TESTS
         module  NEKO_LOG_ENABLE_MODULE
 )
 

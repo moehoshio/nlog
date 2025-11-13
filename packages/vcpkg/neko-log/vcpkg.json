@@ -16,19 +16,10 @@
     },
     {
       "name": "neko-schema",
-      "version": "1.0.0"
+      "version": "1.0.2"
     }
   ],
   "features": {
-    "tests": {
-      "description": "Build tests for NekoLog",
-      "dependencies": [
-        {
-          "name": "gtest",
-          "version>=": "1.14.0"
-        }
-      ]
-    },
     "module": {
       "description": "Enable C++20 module support for NekoLog"
     }

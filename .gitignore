@@ -13,6 +13,7 @@ bin/
 dist/
 release/
 debug/
+downloads/
 
 # CMake/Make
 CMakeLists.txt.user

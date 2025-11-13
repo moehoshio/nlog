@@ -5,7 +5,7 @@ import os
 
 
 class NekoLogConan(ConanFile):
-    name = "nekolog"
+    name = "neko-log"
     # version is managed by config.yml in ConanCenter
     license = "MIT OR Apache-2.0"
     author = "Hoshi <moehoshio>"

@@ -8,7 +8,7 @@ project(NekoLog VERSION 1.0 LANGUAGES CXX)
 # NekoLog project specific options
 option(NEKO_LOG_BUILD_TESTS "Neko Log Build tests" ON)
 option(NEKO_LOG_AUTO_FETCH_DEPS "Neko Log Automatically fetch dependencies" ON)
-option(NEKO_LOG_USE_MODULES "Neko Log Use C++20 modules" OFF)
+option(NEKO_LOG_ENABLE_MODULES "Neko Log Enable C++20 modules" OFF)
 
 find_package(GTest QUIET)
 
@@ -20,7 +20,7 @@ message(STATUS "  - CMake version: ${CMAKE_VERSION}")
 message(STATUS "")
 message(STATUS "  - Neko Log Auto fetch deps: ${NEKO_LOG_AUTO_FETCH_DEPS}")
 message(STATUS "  - Neko Log Build tests: ${NEKO_LOG_BUILD_TESTS}")
-message(STATUS "  - Neko Log Use modules: ${NEKO_LOG_USE_MODULES}")
+message(STATUS "  - Neko Log Enable modules: ${NEKO_LOG_ENABLE_MODULES}")
 message(STATUS "")
 message(STATUS "Dependency summary:")
 message(STATUS "  - GTest : ${GTest_FOUND} version : ${GTest_VERSION}")
@@ -54,15 +54,33 @@ endif()
 # = Main target =
 # ================
 
-if(NEKO_LOG_USE_MODULES)
-    # Module-based library (wrapper module)
-    add_library(NekoLog)
-    add_library(Neko::Log ALIAS NekoLog)
+add_library(NekoLog INTERFACE)
+add_library(Neko::Log ALIAS NekoLog)
+
+target_include_directories(NekoLog INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+# Dependencies
+target_link_libraries(NekoLog INTERFACE NekoSchema)
+target_compile_features(NekoLog INTERFACE cxx_std_20)
+
+
+# ================
+# = C++20 Module =
+# ================
+
+if(NEKO_LOG_ENABLE_MODULES)
+    message(STATUS "NekoLog C++20 module enabled (NEKO_LOG_ENABLE_MODULE=ON)")
+
+    add_library(NekoLog_module)
+    add_library(Neko::Log::Module ALIAS NekoLog_module)
     
-    target_sources(NekoLog
+    target_sources(NekoLog_module
         PUBLIC
             FILE_SET CXX_MODULES FILES
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/log/nlog.ixx
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/log/nlog.cppm
     )
     
     target_include_directories(NekoLog PUBLIC
@@ -80,29 +98,6 @@ if(NEKO_LOG_USE_MODULES)
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
     )
-
-    if(MSVC)
-        target_compile_options(NekoLog PUBLIC /Zc:__cplusplus)
-    endif(MSVC)
-
-else()
-    # Traditional header-only library
-    add_library(NekoLog INTERFACE)
-    add_library(Neko::Log ALIAS NekoLog)
-
-    target_include_directories(NekoLog INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-    )
-
-    # Dependencies
-    target_link_libraries(NekoLog INTERFACE NekoSchema)
-    target_compile_features(NekoLog INTERFACE cxx_std_20)
-
-    if(MSVC)
-        target_compile_options(NekoLog INTERFACE /Zc:__cplusplus)
-    endif(MSVC)
-
 endif()
 
 # ================
@@ -127,7 +122,7 @@ if(NEKO_LOG_BUILD_TESTS)
     gtest_discover_tests(nlog_test)
     
     # Module test (if modules are enabled)
-    if(NEKO_LOG_USE_MODULES)
+    if(NEKO_LOG_ENABLE_MODULES)
         add_executable(nlog_module_test tests/nlog_module_test.cpp)
         target_link_libraries(nlog_module_test PRIVATE NekoLog GTest::gtest GTest::gtest_main)
         target_compile_features(nlog_module_test PRIVATE cxx_std_20)

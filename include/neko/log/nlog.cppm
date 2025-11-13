@@ -1,5 +1,5 @@
 /**
- * @file nlog.ixx
+ * @file nlog.cppm
  * @brief neko logging module - C++20 module wrapper
  * @author moehoshio
  * @copyright Copyright (c) 2025 Hoshi

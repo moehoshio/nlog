@@ -12,10 +12,6 @@
 /* == Compiler Checks == */
 /* ===================== */
 
-#if __cplusplus < 202002L
-    #error "Neko logging requires C++20 or later"
-#endif
-
 #if !__has_include(<format>)
     #error "Neko logging Cannot find header <format>"
 #endif

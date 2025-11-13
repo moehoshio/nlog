@@ -6,12 +6,17 @@ vcpkg_from_github(
     HEAD_REF main
 )
 
+vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        tests   NEKO_LOG_BUILD_TESTS
+        module  NEKO_LOG_ENABLE_MODULE
+)
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
-        -DNEKO_LOG_BUILD_TESTS=OFF
+    # Before NekoSchema is available, automatically fetch dependencies via FetchContent
         -DNEKO_LOG_AUTO_FETCH_DEPS=ON
-        -DNEKO_LOG_USE_MODULES=OFF
 )
 
 vcpkg_cmake_install()

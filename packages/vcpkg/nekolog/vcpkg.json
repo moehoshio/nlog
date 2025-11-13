@@ -1,0 +1,10 @@
+﻿{
+    "version":  "1.0.3",
+    "name":  "nekolog",
+    "description":  "Fast release tool for Neko ecosystem",
+    "homepage":  "https://github.com/moehoshio/NekoLog",
+    "dependencies":  [
+
+                     ],
+    "license":  "MIT"
+}

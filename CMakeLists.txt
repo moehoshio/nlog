@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(NekoLog VERSION 1.0 LANGUAGES CXX)
+project(NekoLog VERSION 1.0.5 LANGUAGES CXX)
 
 # ================
 # === Config ====
@@ -8,8 +8,9 @@ project(NekoLog VERSION 1.0 LANGUAGES CXX)
 # NekoLog project specific options
 option(NEKO_LOG_BUILD_TESTS "Neko Log Build tests" ON)
 option(NEKO_LOG_AUTO_FETCH_DEPS "Neko Log Automatically fetch dependencies" ON)
-option(NEKO_LOG_ENABLE_MODULES "Neko Log Enable C++20 modules" OFF)
+option(NEKO_LOG_ENABLE_MODULE "Neko Log Enable C++20 module" OFF)
 
+find_package(NekoSchema QUIET)
 find_package(GTest QUIET)
 
 # Print configuration summary
@@ -20,23 +21,31 @@ message(STATUS "  - CMake version: ${CMAKE_VERSION}")
 message(STATUS "")
 message(STATUS "  - Neko Log Auto fetch deps: ${NEKO_LOG_AUTO_FETCH_DEPS}")
 message(STATUS "  - Neko Log Build tests: ${NEKO_LOG_BUILD_TESTS}")
-message(STATUS "  - Neko Log Enable modules: ${NEKO_LOG_ENABLE_MODULES}")
+message(STATUS "  - Neko Log Enable module: ${NEKO_LOG_ENABLE_MODULE}")
 message(STATUS "")
 message(STATUS "Dependency summary:")
+message(STATUS "  - NekoSchema : ${NekoSchema_FOUND} version : ${NekoSchema_VERSION}")
 message(STATUS "  - GTest : ${GTest_FOUND} version : ${GTest_VERSION}")
 message(STATUS "")
 
 if(NEKO_LOG_AUTO_FETCH_DEPS)
     include(FetchContent)
-    
-    FetchContent_Declare(
-        NekoSchema
-        GIT_REPOSITORY https://github.com/moehoshio/NekoSchema.git
-        GIT_TAG        main
-    )
-    FetchContent_MakeAvailable(NekoSchema)
 
-    if(NOT GTEST_FOUND AND NEKO_LOG_BUILD_TESTS)
+    if (NOT NekoSchema_FOUND)
+        message(STATUS "NekoSchema Not Found ; Neko Log is Fetching NekoSchema...")
+        FetchContent_Declare(
+            NekoSchema
+            GIT_REPOSITORY https://github.com/moehoshio/NekoSchema.git
+            GIT_TAG        main
+        )
+        set(NEKO_SCHEMA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+        if (NEKO_LOG_ENABLE_MODULE)
+            set(NEKO_SCHEMA_ENABLE_MODULE ON CACHE BOOL "" FORCE)
+        endif()
+        FetchContent_MakeAvailable(NekoSchema)
+    endif(NOT NekoSchema_FOUND)
+
+    if(NOT GTest_FOUND AND NEKO_LOG_BUILD_TESTS)
         message(STATUS "GTest Not Found ; Neko Log is Fetching GoogleTest...")
 
         FetchContent_Declare(
@@ -63,7 +72,7 @@ target_include_directories(NekoLog INTERFACE
 )
 
 # Dependencies
-target_link_libraries(NekoLog INTERFACE NekoSchema)
+target_link_libraries(NekoLog INTERFACE Neko::Schema)
 target_compile_features(NekoLog INTERFACE cxx_std_20)
 
 
@@ -71,8 +80,13 @@ target_compile_features(NekoLog INTERFACE cxx_std_20)
 # = C++20 Module =
 # ================
 
-if(NEKO_LOG_ENABLE_MODULES)
+if(NEKO_LOG_ENABLE_MODULE)
     message(STATUS "NekoLog C++20 module enabled (NEKO_LOG_ENABLE_MODULE=ON)")
+
+    # Check CMake version for module support
+    if(CMAKE_VERSION VERSION_LESS 3.28)
+        message(WARNING "CMake 3.28+ is recommended for full C++20 module support")
+    endif()
 
     add_library(NekoLog_module)
     add_library(Neko::Log::Module ALIAS NekoLog_module)
@@ -80,24 +94,27 @@ if(NEKO_LOG_ENABLE_MODULES)
     target_sources(NekoLog_module
         PUBLIC
             FILE_SET CXX_MODULES FILES
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/log/nlog.cppm
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/neko/log/neko.log.cppm
     )
     
-    target_include_directories(NekoLog PUBLIC
+    target_link_libraries(NekoLog_module PUBLIC Neko::Schema::Module)
+    target_compile_features(NekoLog_module PUBLIC cxx_std_20)
+    
+    # Compiler-specific module flags
+    if(MSVC)
+        target_compile_options(NekoLog_module PUBLIC /experimental:module)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(NekoLog_module PUBLIC -fmodules-ts)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(NekoLog_module PUBLIC -fmodules)
+    endif()
+
+    target_include_directories(NekoLog_module PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     )
-    
-    # Dependencies
-    target_link_libraries(NekoLog PUBLIC NekoSchema)
-    target_compile_features(NekoLog PUBLIC cxx_std_20)
-    
-    # Enable C++20 modules
-    set_target_properties(NekoLog PROPERTIES
-        CXX_STANDARD 20
-        CXX_STANDARD_REQUIRED ON
-        CXX_EXTENSIONS OFF
-    )
+else()
+    message(STATUS "NekoLog C++20 module disabled (NEKO_LOG_ENABLE_MODULE=OFF)")
 endif()
 
 # ================
@@ -108,8 +125,8 @@ if(NEKO_LOG_BUILD_TESTS)
     enable_testing()
     message(STATUS "NekoLog tests enabled (NEKO_LOG_BUILD_TESTS=ON)")
 
-    if (NOT GTEST_FOUND AND NOT NEKO_LOG_AUTO_FETCH_DEPS)
-        message(STATUS "GTest is required for building tests but was not found.")
+    if (NOT GTest_FOUND AND NOT NEKO_LOG_AUTO_FETCH_DEPS)
+        message(WARNING "GTest is required for building tests but was not found.")
         message(FATAL_ERROR "Please enable -DNEKO_LOG_AUTO_FETCH_DEPS=ON or install GTest and make it discoverable by CMake. e.g -DCMAKE_PREFIX_PATH=</path/to/googletest>")
     endif()
 
@@ -124,15 +141,8 @@ if(NEKO_LOG_BUILD_TESTS)
     # Module test (if modules are enabled)
     if(NEKO_LOG_ENABLE_MODULES)
         add_executable(nlog_module_test tests/nlog_module_test.cpp)
-        target_link_libraries(nlog_module_test PRIVATE NekoLog GTest::gtest GTest::gtest_main)
+        target_link_libraries(nlog_module_test PRIVATE NekoLog_module GTest::gtest GTest::gtest_main)
         target_compile_features(nlog_module_test PRIVATE cxx_std_20)
-        
-        set_target_properties(nlog_module_test PROPERTIES
-            CXX_STANDARD 20
-            CXX_STANDARD_REQUIRED ON
-            CXX_EXTENSIONS OFF
-        )
-        
         gtest_discover_tests(nlog_module_test)
     endif()
     
@@ -194,6 +204,7 @@ write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/NekoLogConfigVersion.cmake
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
+    ARCH_INDEPENDENT
 )
 
 install(FILES

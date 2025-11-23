@@ -5,8 +5,6 @@
 
 #include <gtest/gtest.h>
 
-import neko.log;
-
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -17,6 +15,8 @@ import neko.log;
 #include <string>
 #include <thread>
 #include <vector>
+
+import neko.log;
 
 using namespace neko;
 

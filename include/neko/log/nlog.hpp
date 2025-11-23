@@ -8,6 +8,9 @@
 
 #pragma once
 
+// Include header for non-module usage
+#if !defined(NEKO_LOG_ENABLE_MODULE) || (NEKO_LOG_ENABLE_MODULE == false)
+
 /* ===================== */
 /* == Compiler Checks == */
 /* ===================== */
@@ -21,8 +24,6 @@
 #if !defined(__cpp_lib_format) || __cpp_lib_format < 201907L
     #error "Neko logging requires <format> support"
 #endif
-
-
 
 /* ===================== */
 /* === Include Files === */
@@ -51,6 +52,8 @@
 #include <queue>
 #include <unordered_map>
 #include <vector>
+
+#endif // NEKO_LOG_ENABLE_MODULE
 
 namespace neko::log {
 

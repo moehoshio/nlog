@@ -1,0 +1,148 @@
+name: Conan Package Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-conan-installation:
+    name: Test Conan Installation (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux
+          - os: ubuntu-latest
+            python: "3.11"
+          
+          # Windows
+          - os: windows-latest
+            python: "3.11"
+          
+          # macOS
+          - os: macos-latest
+            python: "3.11"
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Install Conan
+      run: |
+        pip install conan
+        conan --version
+
+    - name: Configure Conan profile (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        conan profile detect --force
+
+    - name: Configure Conan profile (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        conan profile detect --force
+
+    - name: Update conanfile to use local source (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        # Copy the conan recipe to a working directory
+        cp -r packages/Conan/neko-log/all/* .
+        
+        # Remove the conandata.yml since we're using local source
+        rm -f conandata.yml
+        
+        # Update conanfile.py to use local source instead of downloading
+        # Use a temp file approach that works on both GNU and BSD sed
+        sed 's/exports_sources = .*/exports_sources = "CMakeLists.txt", "include\/*", "cmake\/*", "LICENSE", "README.md"/' conanfile.py > conanfile.py.tmp
+        mv conanfile.py.tmp conanfile.py
+
+    - name: Update conanfile to use local source (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        # Copy the conan recipe to a working directory
+        Copy-Item -Recurse -Path "packages\Conan\neko-log\all\*" -Destination "."
+        
+        # Remove the conandata.yml since we're using local source
+        if (Test-Path "conandata.yml") { Remove-Item "conandata.yml" }
+        
+        # Update conanfile.py to use local source instead of downloading
+        $conanfile = Get-Content "conanfile.py" -Raw
+        $conanfile = $conanfile -replace 'exports_sources = .*', 'exports_sources = "CMakeLists.txt", "include/*", "cmake/*", "LICENSE", "README.md"'
+        $conanfile | Set-Content "conanfile.py" -NoNewline
+
+    - name: Create Conan package from local source (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        conan create . --build=missing
+
+    - name: Create Conan package from local source (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        conan create . --build=missing
+
+    - name: Verify Conan package installation
+      run: |
+        conan list "neko-log/*"
+
+    - name: Install dependencies with Conan
+      working-directory: tests/conan
+      run: conan install . --build=missing --update
+
+    - name: Configure test project (Unix)
+      if: runner.os != 'Windows'
+      working-directory: tests/conan
+      run: cmake -B ./build -S . -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+
+    - name: Configure test project (Windows)
+      if: runner.os == 'Windows'
+      working-directory: tests/conan
+      run: cmake -B .\build -S . -DCMAKE_TOOLCHAIN_FILE="$PWD/conan_toolchain.cmake"
+
+    - name: Build test project
+      working-directory: tests/conan
+      run: cmake --build ./build --config Release
+
+    - name: Run test executable (Unix)
+      if: runner.os != 'Windows'
+      working-directory: tests/conan
+      run: ./build/conan_test
+
+    - name: Run test executable (Windows)
+      if: runner.os == 'Windows'
+      working-directory: tests/conan
+      run: .\build\Release\conan_test.exe
+
+    - name: Verify package files (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        echo "=== Verifying Conan package structure ==="
+        
+        # Get package reference
+        PKG_REF=$(conan list "neko-log/*:*" --format=compact | grep "neko-log/" | head -1)
+        echo "Package reference: $PKG_REF"
+        
+        # Show package info
+        conan list "neko-log/*"
+        
+        echo ""
+        echo "=== Conan package verification complete ==="
+
+    - name: Verify package files (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        Write-Host "=== Verifying Conan package structure ==="
+        
+        # Show package info
+        conan list "neko-log/*"
+        
+        Write-Host ""
+        Write-Host "=== Conan package verification complete ==="

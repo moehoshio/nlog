@@ -3,7 +3,7 @@
  * @brief Example demonstrating C++20 module usage with NekoLog
  * 
  * To build with modules:
- * cmake -B build -DNEKO_LOG_USE_MODULES=ON
+ * cmake -B build -DNEKO_LOG_ENABLE_MODULE=ON
  * cmake --build build
  */
 

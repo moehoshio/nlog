@@ -1,93 +1,81 @@
 ﻿from conan import ConanFile
-from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout
-from conan.tools.files import copy, get
+from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
+from conan.tools.files import copy
 import os
 
 
 class NekoLogConan(ConanFile):
     name = "neko-log"
-    # version is managed by config.yml in ConanCenter
+    version = "1.0.5"
     license = "MIT OR Apache-2.0"
-    author = "Hoshi <moehoshio>"
+    author = "moehoshio"
     url = "https://github.com/moehoshio/NekoLog"
-    homepage = "https://github.com/moehoshio/NekoLog"
-    description = "An easy-to-use, modern, lightweight, and efficient C++20 logging library"
-    topics = ("logging", "cpp20", "header-only", "async")
+    description = "An easy-to-use, lightweight, and efficient C++20 logging library."
+    topics = ("c++20", "header-only", "logging", "library", "neko")
     
-    # Header-only library
-    package_type = "header-library"
     settings = "os", "compiler", "build_type", "arch"
-    
     options = {
-        "build_tests": [True, False],
-        "enable_modules": [True, False],
+        "enable_module": [True, False],
     }
     default_options = {
-        "build_tests": False,
-        "enable_modules": False,
+        "enable_module": False,
     }
     
     # Header-only library
     package_type = "header-library"
-    settings = "os", "compiler", "build_type", "arch"
+    no_copy_source = True
     
-    options = {
-        "build_tests": [True, False],
-        "enable_modules": [True, False],
-    }
-    default_options = {
-        "build_tests": False,
-        "enable_modules": False,
-    }
-    
-    def export_sources(self):
-        # ConanCenter will download from conandata.yml
-        pass
+    exports_sources = "CMakeLists.txt", "include/*", "tests/*", "LICENSE", "README.md"
 
+    # def requirements(self):
+        # self.test_requires("neko-schema/*")
+    
     def layout(self):
-        cmake_layout(self, src_folder="src")
-
-    def package_id(self):
-        # Header-only library - package_id is independent of settings
-        self.info.clear()
-
-    def source(self):
-        # Download sources from GitHub using conandata.yml
-        get(self, **self.conan_data["sources"][self.version], strip_root=True)
-
+        cmake_layout(self)
+    
     def generate(self):
         tc = CMakeToolchain(self)
-        # Note: ConanCenter CI uses Ninja, but for local testing on Windows
-        # you can use Visual Studio if Ninja is not available
-        # Uncomment the line below for local Windows testing:
-        # tc.generator = "Visual Studio 17 2022"
-        # For ConanCenter submission, keep Ninja (comment out the above line)
-        tc.variables["NEKO_LOG_BUILD_TESTS"] = self.options.build_tests
-        tc.variables["NEKO_LOG_ENABLE_MODULES"] = self.options.enable_modules
-        # Enable auto-fetch to get NekoSchema via FetchContent
+        tc.variables["NEKO_LOG_BUILD_TESTS"] = False
+        tc.variables["NEKO_LOG_ENABLE_MODULE"] = self.options.enable_module
+        # Automatically fetch NekoSchema until it is available in Conan
         tc.variables["NEKO_LOG_AUTO_FETCH_DEPS"] = True
-        # Tell NekoSchema not to build tests (prevents GoogleTest installation)
         tc.variables["NEKO_SCHEMA_BUILD_TESTS"] = False
         tc.generate()
-
+        
+        deps = CMakeDeps(self)
+        deps.generate()
+    
     def build(self):
-        # Header-only library, but we still need to run CMake for installation
         cmake = CMake(self)
         cmake.configure()
-        # No need to build for header-only, and we don't want to build fetched dependencies
 
     def package(self):
-        copy(self, "LICENSE", 
-             src=self.source_folder, 
-             dst=os.path.join(self.package_folder, "licenses"))
+        copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        copy(self, "*.hpp", src=os.path.join(self.source_folder, "include"), dst=os.path.join(self.package_folder, "include"))
+        copy(self, "*.cppm", src=os.path.join(self.source_folder, "include"), dst=os.path.join(self.package_folder, "include"))
+        
         cmake = CMake(self)
         cmake.install()
-
+    
     def package_info(self):
-        self.cpp_info.set_property("cmake_file_name", "NekoLog")
-        self.cpp_info.set_property("cmake_target_name", "Neko::Log")
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
-        # NekoSchema dependency is handled via FetchContent in CMakeLists.txt
-        # Once NekoSchema is published to Conan, uncomment:
-        # self.cpp_info.requires = ["neko-schema::neko-schema"]
+        
+        # Set the CMake package file name to match the official CMake config
+        self.cpp_info.set_property("cmake_file_name", "NekoLog")
+        
+        # Main header-only target
+        self.cpp_info.components["NekoLog"].set_property("cmake_target_name", "Neko::Log")
+        self.cpp_info.components["NekoLog"].includedirs = ["include"]
+        self.cpp_info.components["NekoLog"].requires = []
+        
+        # C++20 requirements
+        self.cpp_info.components["NekoLog"].cxxflags = []
+        
+        # Module support (if enabled)
+        if self.options.enable_module:
+            self.cpp_info.components["NekoLogModule"].set_property("cmake_target_name", "Neko::Log::Module")
+            self.cpp_info.components["NekoLogModule"].includedirs = ["include"]
+    
+    def package_id(self):
+        self.info.clear()

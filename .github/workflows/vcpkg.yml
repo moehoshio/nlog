@@ -1,0 +1,297 @@
+name: Vcpkg Package Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-vcpkg-installation:
+    name: Test vcpkg (${{ matrix.os }}-${{ matrix.triplet }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux targets
+          - os: ubuntu-latest
+            triplet: x64-linux
+          - os: ubuntu-latest
+            triplet: x64-linux-dynamic
+          
+          # Windows targets
+          - os: windows-latest
+            triplet: x64-windows
+          - os: windows-latest
+            triplet: x64-windows-static
+          - os: windows-latest
+            triplet: x86-windows
+          
+          # macOS targets
+          - os: macos-latest
+            triplet: x64-osx
+          - os: macos-15-intel
+            triplet: x64-osx
+          - os: macos-latest
+            triplet: arm64-osx
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Clone vcpkg repository
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git ${{ runner.os == 'Windows' && 'vcpkg' || format('{0}/vcpkg', github.workspace) }}
+
+    - name: Bootstrap vcpkg (Unix)
+      if: runner.os != 'Windows'
+      run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
+
+    - name: Bootstrap vcpkg (Windows)
+      if: runner.os == 'Windows'
+      run: .\vcpkg\bootstrap-vcpkg.bat
+
+    - name: Copy local port to vcpkg ports directory (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        mkdir -p ${{ github.workspace }}/vcpkg/ports/neko-log
+        cp -r ${{ github.workspace }}/packages/vcpkg/neko-log/* ${{ github.workspace }}/vcpkg/ports/neko-log/
+
+    - name: Copy local port to vcpkg ports directory (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        New-Item -ItemType Directory -Force -Path "vcpkg\ports\neko-log"
+        Copy-Item -Recurse -Path "packages\vcpkg\neko-log\*" -Destination "vcpkg\ports\neko-log\"
+
+    - name: Update portfile to use local source (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        python3 << 'PYSCRIPT'
+        import re
+        
+        portfile_path = "${{ github.workspace }}/vcpkg/ports/neko-log/portfile.cmake"
+        source_path = "${{ github.workspace }}"
+        
+        with open(portfile_path, 'r') as f:
+            content = f.read()
+        
+        # Replace vcpkg_from_github block with set(SOURCE_PATH)
+        pattern = r'vcpkg_from_github\([^)]*\)'
+        replacement = f'set(SOURCE_PATH "{source_path}")'
+        new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+        
+        with open(portfile_path, 'w') as f:
+            f.write(new_content)
+        
+        print("Modified portfile content:")
+        with open(portfile_path, 'r') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines[:15], 1):
+                print(f"{i}: {line}", end='')
+        PYSCRIPT
+
+    - name: Update portfile to use local source (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $portfile = "vcpkg\ports\neko-log\portfile.cmake"
+        $sourcePath = "${{ github.workspace }}".Replace('\', '/')
+        
+        Write-Host "Source path to use: $sourcePath"
+        Write-Host "Original portfile content:"
+        Get-Content $portfile | Select-Object -First 10
+        
+        # Read the file
+        $lines = Get-Content $portfile
+        $newLines = @()
+        $skip = $false
+        
+        foreach ($line in $lines) {
+          if ($line -match '^vcpkg_from_github\(') {
+            # Found the start of vcpkg_from_github, add our replacement
+            $newLines += "set(SOURCE_PATH `"$sourcePath`")"
+            $skip = $true
+          }
+          elseif ($skip -and $line -match '^\)') {
+            # Found the closing parenthesis, stop skipping
+            $skip = $false
+          }
+          elseif (-not $skip) {
+            # Not in the vcpkg_from_github block, keep the line
+            $newLines += $line
+          }
+        }
+        
+        # Write back
+        $newLines | Set-Content $portfile
+        
+        Write-Host "`nModified portfile content:"
+        Get-Content $portfile | Select-Object -First 10
+
+    - name: Install neko-log via vcpkg (Unix)
+      if: runner.os != 'Windows'
+      run: ${{ github.workspace }}/vcpkg/vcpkg install neko-log:${{ matrix.triplet }}
+
+    - name: Install neko-log via vcpkg (Windows)
+      if: runner.os == 'Windows'
+      run: .\vcpkg\vcpkg.exe install neko-log:${{ matrix.triplet }}
+
+    - name: Verify installation structure (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        echo "=== Verifying vcpkg installation structure ==="
+        
+        INSTALL_ROOT="${{ github.workspace }}/vcpkg/installed/${{ matrix.triplet }}"
+        
+        # Check headers
+        if [ -d "$INSTALL_ROOT/include/neko/log" ]; then
+          echo "✓ Headers directory exists"
+          echo "  Headers found:"
+          find "$INSTALL_ROOT/include/neko/log" -type f
+        else
+          echo "✗ Headers directory not found"
+          exit 1
+        fi
+        
+        # Check CMake config
+        if [ -f "$INSTALL_ROOT/share/nekolog/NekoLogConfig.cmake" ]; then
+          echo "✓ CMake config file exists"
+        else
+          echo "✗ CMake config file not found"
+          exit 1
+        fi
+        
+        # Check copyright/license
+        if [ -f "$INSTALL_ROOT/share/neko-log/copyright" ]; then
+          echo "✓ Copyright file exists"
+        else
+          echo "✗ Copyright file not found"
+          exit 1
+        fi
+        
+        # Check usage file
+        if [ -f "$INSTALL_ROOT/share/neko-log/usage" ]; then
+          echo "✓ Usage file exists"
+          echo "  Usage content:"
+          cat "$INSTALL_ROOT/share/neko-log/usage"
+        else
+          echo "✗ Usage file not found"
+          exit 1
+        fi
+        
+        # Verify no debug or lib directories (header-only library)
+        if [ -d "$INSTALL_ROOT/debug" ]; then
+          echo "✗ Debug directory should not exist for header-only library"
+          exit 1
+        else
+          echo "✓ No debug directory (correct for header-only)"
+        fi
+        
+        if [ -d "$INSTALL_ROOT/lib" ]; then
+          echo "✗ Lib directory should not exist for header-only library"
+          exit 1
+        else
+          echo "✓ No lib directory (correct for header-only)"
+        fi
+        
+        echo ""
+        echo "=== All installation checks passed! ==="
+
+    - name: Build and run integration test (Unix)
+      if: runner.os != 'Windows'
+      working-directory: tests/vcpkg
+      run: |
+        # Configure
+        cmake -B ./build -S . \
+          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
+          -DCMAKE_PREFIX_PATH="${{ github.workspace }}/vcpkg/installed/${{ matrix.triplet }}" \
+          -DCMAKE_BUILD_TYPE=Release
+        
+        # Build
+        cmake --build ./build --config Release
+        
+        # Run
+        ./build/vcpkg_test
+
+    - name: Verify installation structure (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        Write-Host "=== Verifying vcpkg installation structure ==="
+        
+        $InstallRoot = "vcpkg\installed\${{ matrix.triplet }}"
+        $Success = $true
+        
+        # Check headers
+        if (Test-Path "$InstallRoot\include\neko\log") {
+          Write-Host "✓ Headers directory exists"
+          Write-Host "  Headers found:"
+          Get-ChildItem -Recurse -File "$InstallRoot\include\neko\log" | ForEach-Object { Write-Host "    $($_.FullName)" }
+        } else {
+          Write-Host "✗ Headers directory not found"
+          $Success = $false
+        }
+        
+        # Check CMake config
+        if (Test-Path "$InstallRoot\share\nekolog\NekoLogConfig.cmake") {
+          Write-Host "✓ CMake config file exists"
+        } else {
+          Write-Host "✗ CMake config file not found"
+          $Success = $false
+        }
+        
+        # Check copyright/license
+        if (Test-Path "$InstallRoot\share\neko-log\copyright") {
+          Write-Host "✓ Copyright file exists"
+        } else {
+          Write-Host "✗ Copyright file not found"
+          $Success = $false
+        }
+        
+        # Check usage file
+        if (Test-Path "$InstallRoot\share\neko-log\usage") {
+          Write-Host "✓ Usage file exists"
+          Write-Host "  Usage content:"
+          Get-Content "$InstallRoot\share\neko-log\usage" | ForEach-Object { Write-Host "    $_" }
+        } else {
+          Write-Host "✗ Usage file not found"
+          $Success = $false
+        }
+        
+        # Verify no debug or lib directories (header-only library)
+        if (Test-Path "$InstallRoot\debug") {
+          Write-Host "✗ Debug directory should not exist for header-only library"
+          $Success = $false
+        } else {
+          Write-Host "✓ No debug directory (correct for header-only)"
+        }
+        
+        if (Test-Path "$InstallRoot\lib") {
+          Write-Host "✗ Lib directory should not exist for header-only library"
+          $Success = $false
+        } else {
+          Write-Host "✓ No lib directory (correct for header-only)"
+        }
+        
+        Write-Host ""
+        if ($Success) {
+          Write-Host "=== All installation checks passed! ==="
+        } else {
+          Write-Host "=== Some checks failed ==="
+          exit 1
+        }
+
+    - name: Build and run integration test (Windows)
+      if: runner.os == 'Windows'
+      working-directory: tests/vcpkg
+      run: |
+        # Configure
+        cmake -B .\build -S . `
+          -DCMAKE_TOOLCHAIN_FILE="$PWD\..\..\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_PREFIX_PATH="$PWD\..\..\vcpkg\installed\${{ matrix.triplet }}"
+        
+        # Build
+        cmake --build .\build --config Release
+        
+        # Run
+        .\build\Release\vcpkg_test.exe

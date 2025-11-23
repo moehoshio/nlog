@@ -5,6 +5,7 @@ Neko Logging (nlog) is an easy-to-use, modern, lightweight, and efficient C++20 
 [![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 ![Require](https://img.shields.io/badge/%20Require%20-%3E=%20C++%2020-orange.svg)
 [![CMake](https://img.shields.io/badge/CMake-3.14+-green.svg)](https://cmake.org/)
+![Module Support](https://img.shields.io/badge/Modules-C%2B%2B20-blueviolet.svg)
 
 ## Features
 
@@ -80,7 +81,7 @@ import neko.log;  // Requires CMake use -DNEKO_LOG_USE_MODULES=ON
 
 ```ini
 [requires]
-nekolog/1.0.0
+nekolog/[*]
 
 [generators]
 CMakeDeps

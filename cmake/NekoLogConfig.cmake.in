@@ -1,36 +1,15 @@
 @PACKAGE_INIT@
 
-# Find dependencies
-# Try to find NekoSchema, but make it optional
-find_package(NekoSchema QUIET CONFIG)
-
-if(NOT NekoSchema_FOUND AND NOT TARGET NekoSchema)
-    message(STATUS "NekoSchema not found via find_package, attempting to fetch from git...")
-    
-    # Use FetchContent as fallback
-    include(FetchContent)
-    FetchContent_Declare(
-        NekoSchema
-        GIT_REPOSITORY https://github.com/moehoshio/NekoSchema.git
-        GIT_TAG        main
-        FIND_PACKAGE_ARGS NAMES NekoSchema
-    )
-    
-    # Make NekoSchema available
-    FetchContent_MakeAvailable(NekoSchema)
-    
-    if(NOT TARGET NekoSchema)
-        message(WARNING "NekoSchema could not be found or fetched. NekoLog may not work correctly.")
-    endif()
-endif()
+# Find required dependencies
+include(CMakeFindDependencyMacro)
+find_dependency(NekoSchema REQUIRED)
 
 # Include the targets file
 include("${CMAKE_CURRENT_LIST_DIR}/NekoLogTargets.cmake")
 
-# Create the Neko::Log alias if it doesn't exist
-# (it exists in build tree but not after installation)
+# Recreate the Neko::Log alias for consumers
 if(TARGET NekoLog AND NOT TARGET Neko::Log)
-    add_library(Neko::Log ALIAS NekoLog)
+	add_library(Neko::Log ALIAS NekoLog)
 endif()
 
 check_required_components(NekoLog)

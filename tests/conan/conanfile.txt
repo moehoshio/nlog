@@ -1,0 +1,6 @@
+[requires]
+neko-log/[*]
+
+[generators]
+CMakeDeps
+CMakeToolchain

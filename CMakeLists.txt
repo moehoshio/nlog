@@ -135,7 +135,7 @@ if(NEKO_LOG_BUILD_TESTS)
             message(STATUS "NekoLog module tests enabled (MSVC only)")
 
             add_executable(nlog_module_test tests/nlog_module_test.cpp)
-            target_link_libraries(nlog_module_test PRIVATE NekoLog_module GTest::gtest GTest::gtest_main)
+            target_link_libraries(nlog_module_test PRIVATE Neko::Log::Module GTest::gtest GTest::gtest_main)
             target_compile_features(nlog_module_test PRIVATE cxx_std_20)
             gtest_discover_tests(nlog_module_test)
         else()

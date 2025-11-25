@@ -234,6 +234,9 @@ TEST(NLogModuleTest, BasicAPI) {
     auto* testAppenderPtr = testAppender.get();
     log::addAppender(std::move(testAppender));
 
+    // Set log level to Debug to ensure all messages are logged
+    log::setLevel(log::Level::Debug);
+
     // Test all log levels with simple messages
     log::debug("Debug message");
     log::info("Info message");

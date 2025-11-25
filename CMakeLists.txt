@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(NekoLog VERSION 1.0.5 LANGUAGES CXX)
+project(NekoLog VERSION 1.0.6 LANGUAGES CXX)
 
 # ================
 # === Config ====
@@ -99,15 +99,6 @@ if(NEKO_LOG_ENABLE_MODULE)
     
     target_link_libraries(NekoLog_module PUBLIC Neko::Schema::Module)
     target_compile_features(NekoLog_module PUBLIC cxx_std_20)
-    
-    # Compiler-specific module flags
-    if(MSVC)
-        target_compile_options(NekoLog_module PUBLIC /experimental:module)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(NekoLog_module PUBLIC -fmodules-ts)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        target_compile_options(NekoLog_module PUBLIC -fmodules)
-    endif()
 
     target_include_directories(NekoLog_module PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -139,11 +130,17 @@ if(NEKO_LOG_BUILD_TESTS)
     gtest_discover_tests(nlog_test)
     
     # Module test (if modules are enabled)
-    if(NEKO_LOG_ENABLE_MODULES)
-        add_executable(nlog_module_test tests/nlog_module_test.cpp)
-        target_link_libraries(nlog_module_test PRIVATE NekoLog_module GTest::gtest GTest::gtest_main)
-        target_compile_features(nlog_module_test PRIVATE cxx_std_20)
-        gtest_discover_tests(nlog_module_test)
+    if(NEKO_LOG_ENABLE_MODULE)
+        if (MSVC)
+            message(STATUS "NekoLog module tests enabled (MSVC only)")
+
+            add_executable(nlog_module_test tests/nlog_module_test.cpp)
+            target_link_libraries(nlog_module_test PRIVATE NekoLog_module GTest::gtest GTest::gtest_main)
+            target_compile_features(nlog_module_test PRIVATE cxx_std_20)
+            gtest_discover_tests(nlog_module_test)
+        else()
+            message(STATUS "Skipping NekoLog module tests on non-MSVC toolchains")
+        endif()
     endif()
     
 else()

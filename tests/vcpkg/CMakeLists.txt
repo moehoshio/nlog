@@ -11,7 +11,7 @@ find_package(NekoLog REQUIRED)
 add_executable(vcpkg_test test.cpp)
 
 # Link NekoLog library
-target_link_libraries(vcpkg_test PRIVATE NekoLog)
+target_link_libraries(vcpkg_test PRIVATE Neko::Log)
 
 # Enable testing
 enable_testing()

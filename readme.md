@@ -69,10 +69,42 @@ target_link_libraries(your_target PRIVATE Neko::Log)
 #include <neko/log/nlog.hpp>
 ```
 
-**Or use C++20 modules (optional):**
+#### CMake with Module Support
+
+To enable C++20 module support, use the `NEKO_LOG_ENABLE_MODULE` option:
+
+```cmake
+FetchContent_Declare(
+    ...
+)
+
+# Set Options Before Building
+set(NEKO_LOG_ENABLE_MODULE ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(NekoLog)
+...
+
+target_link_libraries(your_target PRIVATE Neko::Log::Module)
+```
+
+Import the module in your source code:
 
 ```cpp
-import neko.log;  // Requires CMake use -DNEKO_LOG_USE_MODULES=ON
+import neko.log;
+```
+
+### vcpkg
+
+1. Install NekoLog via vcpkg:
+
+```shell
+vcpkg install neko-log
+```
+
+2. Use in your `CMakeLists.txt`:
+
+```cmake
+find_package(NekoLog CONFIG REQUIRED)
+target_link_libraries(your_target PRIVATE Neko::Log)
 ```
 
 ### Conan
@@ -81,7 +113,7 @@ import neko.log;  // Requires CMake use -DNEKO_LOG_USE_MODULES=ON
 
 ```ini
 [requires]
-nekolog/[*]
+neko-log/[*]
 
 [generators]
 CMakeDeps
@@ -103,20 +135,46 @@ find_package(NekoLog CONFIG REQUIRED)
 target_link_libraries(your_target PRIVATE Neko::Log)
 ```
 
-### vcpkg
+#### Conan with C++20 Module Support
 
-1. Add NekoLog as an overlay port to your vcpkg installation:
+To enable C++20 module support with Conan, use the `enable_module` option:
 
 ```shell
-git clone https://github.com/moehoshio/NekoLog.git
-vcpkg install nekolog --overlay-ports=NekoLog/ports/nekolog
+conan install . --build=missing -o neko-log/*:enable_module=True
 ```
 
-2. Use in your `CMakeLists.txt`:
+Or specify it in your `conanfile.txt`:
+
+```ini
+[requires]
+neko-log/[*]
+
+[options]
+neko-log/*:enable_module=True
+
+[generators]
+CMakeDeps
+CMakeToolchain
+```
+
+Or in your `conanfile.py`:
+
+```python
+from conan import ConanFile
+
+class YourProject(ConanFile):
+    requires = "neko-log/[*]"
+    generators = "CMakeDeps", "CMakeToolchain"
+    
+    def configure(self):
+        self.options["neko-log"].enable_module = True
+```
+
+Then link against the module target in your CMakeLists.txt:
 
 ```cmake
 find_package(NekoLog CONFIG REQUIRED)
-target_link_libraries(your_target PRIVATE Neko::Log)
+target_link_libraries(your_target PRIVATE Neko::Log::Module)
 ```
 
 ### Manual
@@ -188,6 +246,7 @@ Use the `neko::log::info`, `neko::log::debug`, `neko::log::warn`, and `neko::log
 Each of these functions has two versions.
 
 Single string:
+
 ```cpp
 inline void debug(const std::string &message, const neko::SrcLocInfo &location = {});
 
@@ -195,12 +254,14 @@ debug("msg"); // (basic format)... msg
 ```
 
 And with format arguments (via std::format):
+
 ```cpp
     template <typename... Args>
     void debug(std::format_string<Args...> fmt, const neko::SrcLocInfo &location, Args &&...args);
 
     debug("Hello , {} . 1 + 1 = {}", "World" , {} , 1 + 1); // (basic format)... Hello , World . 1 + 1 = 2
 ```
+
 Functions for other levels are the same.
 
 Tip: `SrcLoc` can automatically get the source code location. You just need a default object, which you can generate via `{}` or a default parameter.
@@ -221,6 +282,7 @@ log::debug("Debug"); // More detailed messages will be discarded
 
 If needed, you can add more log levels and log with the `log` function.
 For example:
+
 ```cpp
 
 // nlog.hpp
@@ -246,6 +308,7 @@ log::logger.log(log::Level::lv10,"Hello Lv10");
 You can set the names of different threads in the logs using `neko::log::setCurrentThreadName` and `neko::log::setThreadName`.
 
 Example:
+
 ```cpp
 using namespace neko;
 
@@ -260,23 +323,24 @@ log::setThreadName(id, "Thread-1");
 log::info(""); // ... [Thread-1] ...
 ```
 
-
 ### Appenders
 
 You can add multiple appenders simultaneously to output logs to different places. By default, appenders for console output and file writing are provided.
 
 #### Logging to a file:
+
 ```cpp
 // Add a file appender and overwrite the file
 log::addFileAppender("app.log", true); 
 ```
 
 #### Output to console (enabled by default):
+
 ```cpp
 log::addConsoleAppender(); // Add a console appender
 ```
 
-#### Custom Appender:
+#### Custom Appender
 
 You can easily add your own appender to output to any destination.
 
@@ -333,6 +397,7 @@ Inherit from `neko::log::IFormatter` and override the `format` function.
 You need to implement the formatting of the incoming record in the `format` function.
 
 Example:
+
 ```cpp
 using namespace neko;
 
@@ -354,6 +419,7 @@ log::info("Hello");
 ```
 
 output:
+
 ```log
 lv: Info , msg: Hello
 ```

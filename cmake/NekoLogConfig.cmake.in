@@ -7,9 +7,12 @@ find_dependency(NekoSchema REQUIRED)
 # Include the targets file
 include("${CMAKE_CURRENT_LIST_DIR}/NekoLogTargets.cmake")
 
-# Recreate the Neko::Log alias for consumers
+# Recreate alias for consumers
 if(TARGET NekoLog AND NOT TARGET Neko::Log)
 	add_library(Neko::Log ALIAS NekoLog)
+endif()
+if (TARGET NekoLog_module AND NOT TARGET Neko::Log::Module)
+	add_library(Neko::Log::Module ALIAS NekoLog_module)
 endif()
 
 check_required_components(NekoLog)

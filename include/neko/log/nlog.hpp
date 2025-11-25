@@ -19,6 +19,7 @@
     #error "Neko logging Cannot find header <format>"
 #endif
 
+#include <version>
 #include <format>
 
 #if !defined(__cpp_lib_format) || __cpp_lib_format < 201907L

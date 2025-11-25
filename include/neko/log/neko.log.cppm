@@ -1,16 +1,13 @@
-/**
- * @file neko.log.cppm
- * @brief C++20 module interface for NekoLog
- * @details This module exports all NekoLog functionality by wrapping the header files.
- *          The original headers are still available for traditional include-based usage.
- */
+// =====================
+// === Global Module ===
+// =====================
 
 module;
 
-#if defined(__cpp_lib_modules) && (__cpp_lib_modules >= 202207L)
-import std;
-#else
-// Global module fragment - include headers that should not be exported
+// ====================
+// = Standard Library =
+// ====================
+
 #include <format>
 
 #include <chrono>
@@ -32,11 +29,14 @@ import std;
 #include <queue>
 #include <unordered_map>
 #include <vector>
-#endif
 
-import neko.schema;
+// =====================
+// = Module Interface ==
+// =====================
 
 export module neko.log;
+
+import neko.schema;
 
 // Control header files to not import dependencies (dependencies are declared and imported by the cppm)
 #define NEKO_LOG_ENABLE_MODULE true

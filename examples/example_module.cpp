@@ -7,11 +7,11 @@
  * cmake --build build
  */
 
-// Use C++20 module instead of header
-import neko.log;
-
 #include <thread>
 #include <chrono>
+
+// Use C++20 module instead of header
+import neko.log;
 
 int main() {
     using namespace neko;

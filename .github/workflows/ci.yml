@@ -17,36 +17,22 @@ jobs:
         config:
           # Windows builds
           - {
-              name: "Windows MSVC Debug",
+              name: "Windows MSVC Module Debug",
               os: windows-latest,
               cc: "cl",
               cxx: "cl",
               build_type: "Debug",
-              generators: "Visual Studio 17 2022"
+              generators: "Visual Studio 17 2022",
+              enable_module: "ON"
             }
           - {
-              name: "Windows MSVC Release",
+              name: "Windows MSVC Module Release",
               os: windows-latest,
               cc: "cl",
               cxx: "cl",
               build_type: "Release",
-              generators: "Visual Studio 17 2022"
-            }
-          - {
-              name: "Windows Clang Debug",
-              os: windows-latest,
-              cc: "clang",
-              cxx: "clang++",
-              build_type: "Debug",
-              generators: "Visual Studio 17 2022"
-            }
-          - {
-              name: "Windows Clang Release",
-              os: windows-latest,
-              cc: "clang",
-              cxx: "clang++",
-              build_type: "Release",
-              generators: "Visual Studio 17 2022"
+              generators: "Visual Studio 17 2022",
+              enable_module: "ON"
             }
           
           # Linux builds
@@ -56,7 +42,8 @@ jobs:
               cc: "gcc",
               cxx: "g++",
               build_type: "Debug",
-              generators: "Unix Makefiles"
+              generators: "Unix Makefiles",
+              enable_module: "OFF"
             }
           - {
               name: "Ubuntu GCC Release",
@@ -64,7 +51,8 @@ jobs:
               cc: "gcc",
               cxx: "g++",
               build_type: "Release",
-              generators: "Unix Makefiles"
+              generators: "Unix Makefiles",
+              enable_module: "OFF"
             }
           - {
               name: "Ubuntu Clang Debug",
@@ -72,7 +60,8 @@ jobs:
               cc: "clang",
               cxx: "clang++",
               build_type: "Debug",
-              generators: "Unix Makefiles"
+              generators: "Unix Makefiles",
+              enable_module: "OFF"
             }
           - {
               name: "Ubuntu Clang Release",
@@ -80,7 +69,26 @@ jobs:
               cc: "clang",
               cxx: "clang++",
               build_type: "Release",
-              generators: "Unix Makefiles"
+              generators: "Unix Makefiles",
+              enable_module: "OFF"
+            }
+          - {
+              name: "Ubuntu Clang-18 Module Debug",
+              os: ubuntu-latest,
+              cc: "clang-18",
+              cxx: "clang++-18",
+              build_type: "Debug",
+              generators: "Ninja",
+              enable_module: "ON"
+            }
+          - {
+              name: "Ubuntu Clang-21 Module Release",
+              os: ubuntu-latest,
+              cc: "clang-21",
+              cxx: "clang++-21",
+              build_type: "Release",
+              generators: "Ninja",
+              enable_module: "ON"
             }
 
           # macOS builds
@@ -90,7 +98,8 @@ jobs:
               cc: "clang",
               cxx: "clang++",
               build_type: "Debug",
-              generators: "Unix Makefiles"
+              generators: "Unix Makefiles",
+              enable_module: "OFF"
             }
           - {
               name: "macOS Clang Release",
@@ -98,7 +107,8 @@ jobs:
               cc: "clang",
               cxx: "clang++",
               build_type: "Release",
-              generators: "Unix Makefiles"
+              generators: "Unix Makefiles",
+              enable_module: "OFF"
             }
           - {
               name: "macOS GCC Debug",
@@ -106,7 +116,8 @@ jobs:
               cc: "gcc",
               cxx: "g++",
               build_type: "Debug",
-              generators: "Unix Makefiles"
+              generators: "Unix Makefiles",
+              enable_module: "OFF"
             }
           - {
               name: "macOS GCC Release",
@@ -114,9 +125,9 @@ jobs:
               cc: "gcc",
               cxx: "g++",
               build_type: "Release",
-              generators: "Unix Makefiles"
+              generators: "Unix Makefiles",
+              enable_module: "OFF"
             }
-
 
     steps:
     - name: Checkout
@@ -148,13 +159,21 @@ jobs:
           g++ --version
         fi
 
-    - name: Check compiler versions
-      if: startsWith(matrix.config.os, 'ubuntu')
+    - name: Install Clang 18 (Ubuntu)
+      if: startsWith(matrix.config.os, 'ubuntu') && matrix.config.cc == 'clang-18'
       run: |
-        echo "=== Compiler Information ==="
-        ${{ matrix.config.cxx }} --version
-        echo "=== CMake Information ==="
-        cmake --version
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main"
+        sudo apt-get update
+        sudo apt-get install -y clang-18 clang++-18
+
+    - name: Install Clang 21 (Ubuntu)
+      if: startsWith(matrix.config.os, 'ubuntu') && matrix.config.cc == 'clang-21'
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-21 main"
+        sudo apt-get update
+        sudo apt-get install -y clang-21 clang++-21
 
     - name: Install dependencies (macOS)
       if: startsWith(matrix.config.os, 'macos')
@@ -169,6 +188,15 @@ jobs:
           # Setup Clang
           choco install llvm
         }
+    - name: Check compiler versions (Unix)
+      if: "!startsWith(matrix.config.os, 'windows')"
+      run: |
+        echo "=== Compiler Information ==="
+        ${{ matrix.config.cxx }} --version
+        echo "=== CMake Information ==="
+        cmake --version
+        echo "=== Ninja Information ==="
+        ninja --version
 
     - name: Set up MSVC environment (Windows)
       if: startsWith(matrix.config.os, 'windows') && matrix.config.cc == 'cl'
@@ -176,12 +204,15 @@ jobs:
 
     - name: Configure CMake
       run: |
+        echo "=== Configuring NekoFunction (Ubuntu) ==="
+        echo "Compiler: ${{ matrix.config.cxx }}"
+        echo "Module support: ${{ matrix.config.enable_module }}"
         if [[ "${{ matrix.config.generators }}" == *"Visual Studio"* ]]; then
           # For Visual Studio generators, let CMake auto-detect the compiler
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "${{ matrix.config.generators }}" -DNEKO_LOG_BUILD_TESTS=ON -DNEKO_LOG_AUTO_FETCH_DEPS=ON
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "${{ matrix.config.generators }}" -DNEKO_LOG_BUILD_TESTS=ON -DNEKO_LOG_AUTO_FETCH_DEPS=ON -DNEKO_LOG_ENABLE_MODULE=${{ matrix.config.enable_module }}
         else
           # For other generators, specify the compiler explicitly
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_LOG_BUILD_TESTS=ON -DNEKO_LOG_AUTO_FETCH_DEPS=ON
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} -G "${{ matrix.config.generators }}" -DNEKO_LOG_BUILD_TESTS=ON -DNEKO_LOG_AUTO_FETCH_DEPS=ON -DNEKO_LOG_ENABLE_MODULE=${{ matrix.config.enable_module }}
         fi
       shell: bash
 

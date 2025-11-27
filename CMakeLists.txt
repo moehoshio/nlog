@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(NekoLog VERSION 1.0.6 LANGUAGES CXX)
+project(NekoLog VERSION 1.0.7 LANGUAGES CXX)
 
 # ================
 # === Config ====
@@ -171,17 +171,6 @@ install(TARGETS NekoLog
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-
-# If NekoSchema was fetched via FetchContent, also install it
-if(NEKO_LOG_AUTO_FETCH_DEPS AND TARGET NekoSchema)
-    install(TARGETS NekoSchema
-        EXPORT NekoLogTargets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-endif()
 
 # Install export targets
 install(EXPORT NekoLogTargets
